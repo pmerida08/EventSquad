@@ -1,8 +1,20 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 
-import type { Database } from '@/types/database.types';
+// Tipo local hasta crear la vista `meetup_proposals_with_votes` en Fase 5
+export interface MeetupProposalWithVotes {
+  id: string;
+  group_id: string;
+  proposed_by: string;
+  location_name: string;
+  lat: number;
+  lng: number;
+  proposed_time: string;
+  selected: boolean;
+  created_at: string;
+  vote_count: number;
+}
 
-type Proposal = Database['public']['Views']['meetup_proposals_with_votes']['Row'];
+type Proposal = MeetupProposalWithVotes;
 
 interface VotingCardProps {
   proposal: Proposal;

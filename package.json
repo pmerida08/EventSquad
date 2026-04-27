@@ -24,6 +24,7 @@
     "expo-camera": "^55.0.16",
     "expo-constants": "~18.0.13",
     "expo-font": "~14.0.11",
+    "expo-image": "^55.0.9",
     "expo-image-picker": "^55.0.19",
     "expo-linking": "~8.0.11",
     "expo-location": "^55.1.8",
