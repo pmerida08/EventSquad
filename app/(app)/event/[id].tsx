@@ -10,8 +10,10 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+// react-native-maps requiere un development build (no funciona en Expo Go).
+// Se sustituye por un botón que abre Google Maps externamente.
 
 import { fetchEventById, formatEventDate, formatDistance } from '@/lib/events';
 import type { EventRow } from '@/lib/events';
@@ -122,33 +124,17 @@ export default function EventDetailScreen() {
             <InfoRow icon="📍" label="Dirección" value={event.address} />
           </View>
 
-          {/* Mapa */}
+          {/* Ubicación — botón abre Google Maps externamente */}
           <Text style={styles.sectionTitle}>Ubicación</Text>
-          <Pressable onPress={openMaps} style={styles.mapWrapper}>
-            <MapView
-              style={styles.map}
-              provider={PROVIDER_DEFAULT}
-              initialRegion={{
-                latitude: event.lat,
-                longitude: event.lng,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-              scrollEnabled={false}
-              zoomEnabled={false}
-              pitchEnabled={false}
-              rotateEnabled={false}
-            >
-              <Marker
-                coordinate={{ latitude: event.lat, longitude: event.lng }}
-                title={event.name}
-                description={event.venue}
-                pinColor={color}
-              />
-            </MapView>
-            <View style={styles.mapOverlay}>
-              <Text style={styles.mapOverlayText}>Abrir en Maps →</Text>
+          <Pressable onPress={openMaps} style={[styles.mapsBtn, { borderColor: color }]}>
+            <View style={[styles.mapsBtnIcon, { backgroundColor: color + '18' }]}>
+              <Text style={styles.mapsBtnEmoji}>🗺️</Text>
             </View>
+            <View style={styles.mapsBtnContent}>
+              <Text style={styles.mapsBtnTitle}>Ver en Google Maps</Text>
+              <Text style={styles.mapsBtnSub}>{event.address}</Text>
+            </View>
+            <Text style={[styles.mapsBtnArrow, { color }]}>→</Text>
           </Pressable>
 
           {/* CTA grupos — Fase 3 */}
@@ -213,10 +199,13 @@ const styles = StyleSheet.create({
   infoValue:       { fontSize: 15, color: '#111827', fontWeight: '500' },
   divider:         { height: 1, backgroundColor: '#F3F4F6', marginHorizontal: 14 },
   sectionTitle:    { fontSize: 17, fontWeight: '700', color: '#111827', marginBottom: 12 },
-  mapWrapper:      { borderRadius: 16, overflow: 'hidden', marginBottom: 24, height: 180 },
-  map:             { flex: 1 },
-  mapOverlay:      { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.35)', paddingVertical: 8, alignItems: 'center' },
-  mapOverlayText:  { color: '#fff', fontSize: 13, fontWeight: '600' },
+  mapsBtn:         { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, borderWidth: 1.5, padding: 14, marginBottom: 24, gap: 12 },
+  mapsBtnIcon:     { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  mapsBtnEmoji:    { fontSize: 22 },
+  mapsBtnContent:  { flex: 1 },
+  mapsBtnTitle:    { fontSize: 15, fontWeight: '600', color: '#111827' },
+  mapsBtnSub:      { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  mapsBtnArrow:    { fontSize: 18, fontWeight: '700' },
   groupsCard:      { backgroundColor: '#EEF2FF', borderRadius: 16, padding: 20, marginBottom: 32 },
   groupsTitle:     { fontSize: 17, fontWeight: '700', color: '#111827', marginBottom: 6 },
   groupsSub:       { fontSize: 14, color: '#6B7280', lineHeight: 20, marginBottom: 16 },
