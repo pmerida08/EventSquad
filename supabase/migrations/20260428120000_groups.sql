@@ -129,3 +129,35 @@ end;
 $$;
 
 grant execute on function public.join_group to authenticated;
+
+-- ── RPC create_group ──────────────────────────────────────────────────────────
+-- Crea el grupo e inserta al creador como 'owner' en una sola transacción.
+-- Usa SECURITY DEFINER para bypassear RLS en group_members (no hay política INSERT
+-- directa para evitar que usuarios se añadan a sí mismos saltándose las validaciones
+-- de join_group).
+create or replace function public.create_group(
+  p_event_id    uuid,
+  p_name        text,
+  p_description text default null,
+  p_max_members int  default 10
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_group_id uuid;
+begin
+  insert into public.groups (event_id, name, description, max_members, created_by)
+  values (p_event_id, p_name, p_description, p_max_members, auth.uid())
+  returning id into v_group_id;
+
+  insert into public.group_members (group_id, user_id, role)
+  values (v_group_id, auth.uid(), 'owner');
+
+  return v_group_id;
+end;
+$$;
+
+grant execute on function public.create_group to authenticated;

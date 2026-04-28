@@ -88,29 +88,25 @@ export async function getMyGroupForEvent(eventId: string): Promise<string | null
   return data?.group_id ?? null;
 }
 
-/** Crear un grupo y unirse automáticamente como owner */
+/** Crear un grupo y unirse automáticamente como owner (via RPC SECURITY DEFINER) */
 export async function createGroup(
   eventId: string,
   name: string,
   description: string,
   maxMembers: number,
 ): Promise<GroupRow> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('No autenticado');
+  // La RPC crea el grupo e inserta al creador como 'owner' en una sola transacción,
+  // evitando el problema de RLS en group_members para inserts directos.
+  const { data: groupId, error } = await supabase.rpc('create_group', {
+    p_event_id:    eventId,
+    p_name:        name,
+    p_description: description || null,
+    p_max_members: maxMembers,
+  });
+  if (error) throw error;
 
-  const { data: group, error: gErr } = await supabase
-    .from('groups')
-    .insert({ event_id: eventId, name, description: description || null, max_members: maxMembers, created_by: user.id })
-    .select()
-    .single();
-  if (gErr) throw gErr;
-
-  // Unirse como owner
-  const { error: mErr } = await supabase
-    .from('group_members')
-    .insert({ group_id: group.id, user_id: user.id, role: 'owner' });
-  if (mErr) throw mErr;
-
+  const group = await fetchGroupById(groupId as string);
+  if (!group) throw new Error('Grupo creado pero no encontrado');
   return group;
 }
 

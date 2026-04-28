@@ -56,6 +56,7 @@ export type Database = {
         Args: { cat?: string; radius_km?: number; user_lat: number; user_lng: number }
         Returns: { address: string; category: string; date: string; distance_km: number; id: string; image_url: string; lat: number; lng: number; name: string; scraped_at: string; source_id: string; venue: string }[]
       }
+      create_group: { Args: { p_event_id: string; p_name: string; p_description?: string | null; p_max_members?: number }; Returns: string }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
     }
     Enums: { [_ in never]: never }
