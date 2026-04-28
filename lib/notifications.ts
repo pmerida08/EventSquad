@@ -37,5 +37,8 @@ export async function registerForPushNotifications(): Promise<string | null> {
 }
 
 export async function savePushTokenToProfile(userId: string, token: string): Promise<void> {
-  await supabase.from('profiles').update({ expo_push_token: token }).eq('id', userId);
+  await supabase
+    .from('profiles')
+    .update({ expo_push_token: token })
+    .eq('id', userId);
 }

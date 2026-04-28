@@ -1,6 +1,13 @@
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
+
+import { useAuthStore } from '@/stores/authStore';
 
 export default function AppLayout() {
+  const session = useAuthStore((s) => s.session);
+
+  // Sin sesión → flujo de auth
+  if (!session) return <Redirect href="/(auth)/onboarding" />;
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />

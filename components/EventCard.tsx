@@ -1,8 +1,18 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 
-import type { Database } from '@/types/database.types';
-
-type Event = Database['public']['Tables']['events']['Row'];
+// Tipo local hasta crear la tabla `events` en Fase 2
+export interface Event {
+  id: string;
+  name: string;
+  date: string;
+  venue: string;
+  address: string;
+  lat: number;
+  lng: number;
+  image_url: string | null;
+  category: string;
+  scraped_at: string;
+}
 
 interface EventCardProps {
   event: Event;
