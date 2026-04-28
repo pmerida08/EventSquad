@@ -1,33 +1,37 @@
-import { View, Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
+import { View, Text, StyleSheet } from 'react-native';
 
-interface Member {
+type AvatarMember = {
   id: string;
   display_name: string;
   avatar_url: string | null;
-}
+};
 
-interface MemberAvatarsProps {
-  members: Member[];
+type MemberAvatarsProps = {
+  members: AvatarMember[];
   maxVisible?: number;
   size?: number;
-}
+};
 
 export function MemberAvatars({ members, maxVisible = 5, size = 36 }: MemberAvatarsProps) {
-  const visible = members.slice(0, maxVisible);
-  const overflow = members.length - maxVisible;
+  const visible  = members.slice(0, maxVisible);
+  const overflow = members.length - visible.length;
+  const overlap  = size * 0.3;
 
   return (
-    <View style={styles.row}>
-      {visible.map((member, index) => (
+    <View style={[styles.row, { height: size }]}>
+      {visible.map((m, i) => (
         <View
-          key={member.id}
-          style={[styles.avatarWrapper, { marginLeft: index === 0 ? 0 : -(size * 0.3) }]}
+          key={m.id}
+          style={[
+            styles.avatarWrapper,
+            { width: size, height: size, borderRadius: size / 2, marginLeft: i === 0 ? 0 : -overlap },
+          ]}
         >
-          {member.avatar_url ? (
+          {m.avatar_url ? (
             <Image
-              source={{ uri: member.avatar_url }}
-              style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}
+              source={{ uri: m.avatar_url }}
+              style={{ width: size, height: size, borderRadius: size / 2 }}
               contentFit="cover"
             />
           ) : (
@@ -37,8 +41,8 @@ export function MemberAvatars({ members, maxVisible = 5, size = 36 }: MemberAvat
                 { width: size, height: size, borderRadius: size / 2 },
               ]}
             >
-              <Text style={[styles.initials, { fontSize: size * 0.35 }]}>
-                {member.display_name[0]?.toUpperCase() ?? '?'}
+              <Text style={[styles.initial, { fontSize: size * 0.36 }]}>
+                {m.display_name.charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
@@ -47,11 +51,16 @@ export function MemberAvatars({ members, maxVisible = 5, size = 36 }: MemberAvat
       {overflow > 0 && (
         <View
           style={[
-            styles.overflow,
-            { width: size, height: size, borderRadius: size / 2, marginLeft: -(size * 0.3) },
+            styles.extra,
+            {
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              marginLeft: -overlap,
+            },
           ]}
         >
-          <Text style={[styles.overflowText, { fontSize: size * 0.3 }]}>+{overflow}</Text>
+          <Text style={[styles.extraText, { fontSize: size * 0.3 }]}>+{overflow}</Text>
         </View>
       )}
     </View>
@@ -60,20 +69,23 @@ export function MemberAvatars({ members, maxVisible = 5, size = 36 }: MemberAvat
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
-  avatarWrapper: { borderWidth: 2, borderColor: '#fff', borderRadius: 99 },
-  avatar: { borderRadius: 99 },
+  avatarWrapper: {
+    borderWidth: 2,
+    borderColor: '#fff',
+    overflow: 'hidden',
+  },
   placeholder: {
-    backgroundColor: '#6366F1',
+    backgroundColor: '#C7D2FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  initials: { color: '#fff', fontWeight: '600' },
-  overflow: {
+  initial: { color: '#4338CA', fontWeight: '700' },
+  extra: {
     backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#fff',
   },
-  overflowText: { color: '#374151', fontWeight: '600' },
+  extraText: { color: '#6B7280', fontWeight: '700' },
 });

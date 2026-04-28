@@ -145,7 +145,7 @@ export default function EventDetailScreen() {
             </Text>
             <Pressable
               style={[styles.groupsBtn, { backgroundColor: color }]}
-              onPress={() => router.push(`/(app)/group/${event.id}/index` as never)}
+              onPress={() => router.push(`/(app)/event-groups/${event.id}` as never)}
             >
               <Text style={styles.groupsBtnText}>Ver grupos →</Text>
             </Pressable>
