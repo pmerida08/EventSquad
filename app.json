@@ -64,7 +64,8 @@
         {
           "photosPermission": "EventSquad necesita acceso a tus fotos para subir tu foto de perfil."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
