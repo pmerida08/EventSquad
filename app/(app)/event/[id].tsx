@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center', justifyContent: 'center',
   },
-  floatingBackText: { color: '#fff', fontSize: 20, lineHeight: 22 },
+  floatingBackText: { color: '#fff', fontSize: 20, lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
   body:            { padding: 20 },
   metaRow:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   categoryBadge:   { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
