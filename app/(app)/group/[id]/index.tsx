@@ -103,7 +103,7 @@ export default function GroupDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.center}>
+      <SafeAreaView style={styles.center} edges={['top', 'bottom']}>
         <ActivityIndicator size="large" color="#6366F1" />
       </SafeAreaView>
     );
@@ -111,7 +111,7 @@ export default function GroupDetailScreen() {
 
   if (error || !group) {
     return (
-      <SafeAreaView style={styles.center}>
+      <SafeAreaView style={styles.center} edges={['top', 'bottom']}>
         <Text style={styles.errorText}>{error ?? 'Grupo no encontrado'}</Text>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backBtnText}>← Volver</Text>
@@ -127,7 +127,7 @@ export default function GroupDetailScreen() {
   const inOther   = myGroupId !== null && myGroupId !== undefined && myGroupId !== id;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn2} hitSlop={8}>
