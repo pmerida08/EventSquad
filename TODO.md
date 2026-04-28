@@ -23,13 +23,13 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 
 ## Fase 0 — Setup y arquitectura
 
-- [ ] Inicializar proyecto con `npx create-expo-app eventsquad --template tabs`
-- [ ] Configurar Expo Router con rutas: `(auth)`, `(app)/(tabs)`, `(app)/event/[id]`, `(app)/group/[id]`
-- [ ] Crear proyecto en Supabase y guardar variables de entorno
-- [ ] Configurar `supabase-js` client con singleton (contexts/supabase.ts)
+- [x] Inicializar proyecto con `npx create-expo-app eventsquad --template tabs`
+- [x] Configurar Expo Router con rutas: `(auth)`, `(app)/(tabs)`, `(app)/event/[id]`, `(app)/group/[id]`
+- [x] Crear proyecto en Supabase y guardar variables de entorno
+- [x] Configurar `supabase-js` client con singleton (`lib/supabase.ts`) — usa SecureStore con chunking en lugar de AsyncStorage (compatibilidad nueva arquitectura + Expo Go)
 - [ ] Configurar EAS Build para iOS y Android
-- [ ] Configurar ESLint + Prettier + TypeScript estricto
-- [ ] Instalar dependencias base:
+- [x] Configurar ESLint + Prettier + TypeScript estricto
+- [x] Instalar dependencias base:
   - `@supabase/supabase-js`
   - `expo-location`
   - `expo-notifications`
@@ -37,7 +37,7 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
   - `expo-camera`
   - `react-native-maps`
   - `zustand`
-  - `nativewind`
+  - `nativewind` — instalado pero pendiente de configurar
   - `react-native-gifted-chat`
   - `date-fns`
 
@@ -46,23 +46,32 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 ## Fase 1 — Autenticación y perfil de usuario
 
 ### Base de datos (Supabase)
-- [ ] Tabla `profiles` con: `id` (uuid, FK auth.users), `display_name`, `avatar_url`, `bio`, `verified`, `created_at`
-- [ ] Storage bucket `avatars` con RLS (solo el propio usuario puede subir/actualizar)
-- [ ] RLS policies en `profiles`: lectura pública, escritura solo propietario
-- [ ] Trigger `on_auth_user_created` → inserta fila en `profiles`
+- [x] Tabla `profiles` con: `id` (uuid, FK auth.users), `display_name`, `avatar_url`, `bio`, `verified`, `expo_push_token`, `created_at`
+- [x] Storage bucket `avatars` con RLS (solo el propio usuario puede subir/actualizar)
+- [x] RLS policies en `profiles`: lectura pública, escritura solo propietario
+- [x] Trigger `on_auth_user_created` → inserta fila en `profiles`
+- [x] Tipos TypeScript generados desde Supabase MCP → `types/database.types.ts`
 
 ### Pantallas
-- [ ] Pantalla de onboarding (splash + presentación de la app)
-- [ ] Pantalla de registro con email/contraseña o magic link
-- [ ] Pantalla de login
-- [ ] Pantalla de configuración de perfil: nombre, bio, foto
-- [ ] Flujo de subida de foto de perfil con `expo-image-picker`
+- [x] Pantalla de onboarding (`app/(auth)/onboarding.tsx`) — logo, 3 cards de features, CTAs
+- [x] Pantalla de registro con email/contraseña o magic link (`app/(auth)/register.tsx`)
+- [x] Pantalla de login (`app/(auth)/login.tsx`) — email+contraseña + magic link
+- [x] Pantalla de configuración de perfil (`app/(auth)/profile-setup.tsx`) — nombre, bio, foto
+- [x] Flujo de subida de foto de perfil con `expo-image-picker` (`lib/auth.ts → pickAndUploadAvatar`)
+- [x] Tab de perfil con datos reales (`app/(app)/(tabs)/profile.tsx`)
+
+### Auth / Estado global
+- [x] `lib/auth.ts` — helpers signUp/signIn/signOut/getProfile/updateProfile/uploadAvatar/markUserAsVerified
+- [x] `hooks/useAuth.ts` — inicializa sesión y listener onAuthStateChange
+- [x] `stores/authStore.ts` — estado global session/user/profile con Zustand
+- [x] Fix race condition register → profile-setup (setSession antes de navegar)
 
 ### Verificación de identidad
-- [ ] Implementar liveness check con la cámara: el usuario debe hacer un gesto en tiempo real para confirmar que es una persona real (usar `expo-face-detector` o integrar servicio externo)
-- [ ] Campo `verified: boolean` en `profiles`, actualizado tras superar el liveness check
-- [ ] Badge de "Verificado" visible en el perfil
-- [ ] Restricción: solo usuarios verificados pueden unirse a grupos
+- [x] Liveness check básico con cámara frontal (`app/(auth)/verify-identity.tsx`) — selfie MVP
+- [x] Campo `verified: boolean` en `profiles`, actualizado tras la captura
+- [x] `components/ui/VerifiedBadge.tsx` — badge verde, tamaños sm/md/lg
+- [x] Banner "Verifica tu identidad" en perfil para usuarios no verificados
+- [ ] TODO (Fase 7): integrar Veriff / AWS Rekognition para liveness check real
 
 ---
 
@@ -70,17 +79,18 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 
 ### Geolocalización
 - [ ] Solicitar permiso de ubicación al iniciar la app (`expo-location`)
-- [ ] Guardar coordenadas en memoria (Zustand store), no en DB
+- [ ] Guardar coordenadas en memoria (Zustand store — `stores/locationStore.ts` ya existe como placeholder)
 - [ ] Pantalla de mapa con `react-native-maps` centrado en la ubicación del usuario
 
-### Web scraping de eventos
+### Web scraping / Fuente de eventos
 - [ ] Supabase Edge Function `scrape-events`:
   - Recibe `lat`, `lng`, `radius_km`
-  - Hace scraping de fuentes públicas de eventos locales (ej. Eventbrite API pública, Ra.co, Songkick, o web scraping con cheerio)
+  - Fuente a decidir: Ticketmaster API (oficial), Eventbrite API, o scraping con cheerio
   - Devuelve lista de eventos: `{ id, name, date, venue, address, lat, lng, image_url, category }`
-- [ ] Tabla `events` para cachear resultados del scraping con TTL de 1h
-- [ ] Pantalla de listado de eventos próximos con filtros por categoría (concierto, festival, fiesta, etc.)
-- [ ] Pantalla de detalle de evento: foto, fecha, lugar, mapa, grupos activos
+- [ ] Tabla `events` para cachear resultados con TTL de 1h
+- [ ] Migración SQL: tabla `events` + RLS (lectura pública, escritura solo service_role)
+- [ ] Pantalla de listado de eventos próximos con filtros por categoría
+- [ ] Pantalla de detalle de evento: foto, fecha, lugar, mapa, grupos activos (`app/(app)/event/[id].tsx` — placeholder existente)
 
 ---
 
