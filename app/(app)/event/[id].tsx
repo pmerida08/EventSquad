@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // react-native-maps requiere un development build (no funciona en Expo Go).
 // Se sustituye por un botón que abre Google Maps externamente.
@@ -43,6 +43,7 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const coordinates = useLocationStore((s) => s.coordinates);
+  const insets = useSafeAreaInsets();
 
   const [event, setEvent]     = useState<EventRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,8 +100,11 @@ export default function EventDetailScreen() {
           </View>
         )}
 
-        {/* Back button flotante */}
-        <Pressable style={styles.floatingBack} onPress={() => router.back()}>
+        {/* Back button flotante — top ajustado al safe area */}
+        <Pressable
+          style={[styles.floatingBack, { top: insets.top + 10 }]}
+          onPress={() => router.back()}
+        >
           <Text style={styles.floatingBackText}>←</Text>
         </Pressable>
 
