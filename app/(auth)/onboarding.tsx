@@ -1,6 +1,9 @@
+import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
-import { View, Text, StyleSheet, Pressable, Image, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { useTheme, type Theme } from '@/constants/theme';
 
 const SLIDES = [
   {
@@ -21,117 +24,63 @@ const SLIDES = [
 ];
 
 export default function OnboardingScreen() {
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+  const t = useTheme();
+  const s = makeStyles(t);
 
-      <View style={styles.content}>
+  return (
+    <SafeAreaView style={s.container}>
+      <StatusBar style={t.statusBar} />
+
+      <View style={s.content}>
         {/* Logo */}
-        <View style={styles.logoWrapper}>
-          <Text style={styles.logoEmoji}>⚡</Text>
-          <Text style={styles.logoText}>EventSquad</Text>
+        <View style={s.logoWrapper}>
+          <Text style={s.logoEmoji}>⚡</Text>
+          <Text style={s.logoText}>EventSquad</Text>
         </View>
 
-        {/* Cards de funcionalidades */}
-        <View style={styles.slides}>
+        {/* Cards */}
+        <View style={s.slides}>
           {SLIDES.map((slide) => (
-            <View key={slide.title} style={styles.slide}>
-              <Text style={styles.slideEmoji}>{slide.emoji}</Text>
-              <View style={styles.slideText}>
-                <Text style={styles.slideTitle}>{slide.title}</Text>
-                <Text style={styles.slideDesc}>{slide.description}</Text>
+            <View key={slide.title} style={s.slide}>
+              <Text style={s.slideEmoji}>{slide.emoji}</Text>
+              <View style={s.slideTextWrap}>
+                <Text style={s.slideTitle}>{slide.title}</Text>
+                <Text style={s.slideDesc}>{slide.description}</Text>
               </View>
             </View>
           ))}
         </View>
       </View>
 
-      {/* Botones de acción */}
-      <View style={styles.actions}>
-        <Pressable
-          style={styles.primaryButton}
-          onPress={() => router.push('/(auth)/register')}
-        >
-          <Text style={styles.primaryButtonText}>Crear cuenta</Text>
+      <View style={s.actions}>
+        <Pressable style={s.primaryButton} onPress={() => router.push('/(auth)/register')}>
+          <Text style={s.primaryButtonText}>Crear cuenta</Text>
         </Pressable>
-
-        <Pressable
-          style={styles.secondaryButton}
-          onPress={() => router.push('/(auth)/login')}
-        >
-          <Text style={styles.secondaryButtonText}>Ya tengo cuenta</Text>
+        <Pressable style={s.secondaryButton} onPress={() => router.push('/(auth)/login')}>
+          <Text style={s.secondaryButtonText}>Ya tengo cuenta</Text>
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FAFAFA',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 28,
-    paddingTop: 32,
-  },
-  logoWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 48,
-  },
-  logoEmoji: { fontSize: 32 },
-  logoText: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#6366F1',
-    letterSpacing: -0.5,
-  },
-  slides: { gap: 24 },
-  slide: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 16,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  slideEmoji: { fontSize: 36 },
-  slideText: { flex: 1 },
-  slideTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  slideDesc: { fontSize: 14, color: '#6B7280', lineHeight: 20 },
-  actions: {
-    paddingHorizontal: 28,
-    paddingBottom: 24,
-    gap: 12,
-  },
-  primaryButton: {
-    backgroundColor: '#6366F1',
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  secondaryButton: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#6366F1',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    container:        { flex: 1, backgroundColor: t.background },
+    content:          { flex: 1, paddingHorizontal: 28, paddingTop: 32 },
+    logoWrapper:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 48 },
+    logoEmoji:        { fontSize: 32 },
+    logoText:         { fontSize: 28, fontWeight: '800', color: t.primary, letterSpacing: -0.5 },
+    slides:           { gap: 24 },
+    slide:            { flexDirection: 'row', alignItems: 'flex-start', gap: 16, backgroundColor: t.surface, borderRadius: 16, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+    slideEmoji:       { fontSize: 36 },
+    slideTextWrap:    { flex: 1 },
+    slideTitle:       { fontSize: 16, fontWeight: '700', color: t.text, marginBottom: 4 },
+    slideDesc:        { fontSize: 14, color: t.textSecondary, lineHeight: 20 },
+    actions:          { paddingHorizontal: 28, paddingBottom: 24, gap: 12 },
+    primaryButton:    { backgroundColor: t.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+    primaryButtonText:{ color: '#fff', fontSize: 16, fontWeight: '700' },
+    secondaryButton:  { backgroundColor: t.primaryBg, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+    secondaryButtonText: { color: t.primary, fontSize: 16, fontWeight: '600' },
+  });
+}

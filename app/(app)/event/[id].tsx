@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -86,6 +87,8 @@ export default function EventDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      {/* Hero image is dark → always light icons over it */}
+      <StatusBar style="light" />
       <ScrollView bounces showsVerticalScrollIndicator={false}>
         {/* Hero image */}
         {event.image_url ? (
