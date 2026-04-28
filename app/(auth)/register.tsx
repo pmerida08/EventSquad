@@ -15,8 +15,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { signUpWithEmail } from '@/lib/auth';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function RegisterScreen() {
+  const setSession = useAuthStore((s) => s.setSession);
+
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,17 +42,19 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const { user } = await signUpWithEmail(
+      const { user, session } = await signUpWithEmail(
         email.trim().toLowerCase(),
         password,
         displayName.trim(),
       );
 
-      if (user) {
-        // Supabase puede requerir confirmación de email según configuración
-        // Si email_confirm está OFF, la sesión se crea automáticamente
+      if (user && session) {
+        // Seteamos la sesión en el store ANTES de navegar para evitar
+        // la race condition con onAuthStateChange (que llega de forma asíncrona).
+        setSession(session);
         router.replace('/(auth)/profile-setup');
       } else {
+        // Supabase tiene confirmación de email activada
         Alert.alert(
           'Confirma tu email',
           'Te hemos enviado un correo de confirmación. Revísalo y luego inicia sesión.',
