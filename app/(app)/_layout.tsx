@@ -1,9 +1,13 @@
 import { Redirect, Stack } from 'expo-router';
 
+import { useLocationInitializer } from '@/hooks/useLocation';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function AppLayout() {
   const session = useAuthStore((s) => s.session);
+
+  // Solicita permisos de ubicación y guarda coords en el store
+  useLocationInitializer();
 
   // Sin sesión → flujo de auth
   if (!session) return <Redirect href="/(auth)/onboarding" />;

@@ -1,7 +1,3 @@
-// Generado automáticamente por Supabase MCP.
-// Para regenerar: npm run supabase:types
-// NO editar manualmente — se sobreescribe en cada regeneración.
-
 export type Json =
   | string
   | number
@@ -18,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      events: {
+        Row: {
+          address: string
+          category: string
+          date: string
+          id: string
+          image_url: string | null
+          lat: number
+          lng: number
+          name: string
+          scraped_at: string
+          source_id: string | null
+          venue: string
+        }
+        Insert: {
+          address: string
+          category?: string
+          date: string
+          id?: string
+          image_url?: string | null
+          lat: number
+          lng: number
+          name: string
+          scraped_at?: string
+          source_id?: string | null
+          venue: string
+        }
+        Update: {
+          address?: string
+          category?: string
+          date?: string
+          id?: string
+          image_url?: string | null
+          lat?: number
+          lng?: number
+          name?: string
+          scraped_at?: string
+          source_id?: string | null
+          venue?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -53,7 +91,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      events_near: {
+        Args: {
+          cat?: string
+          radius_km?: number
+          user_lat: number
+          user_lng: number
+        }
+        Returns: {
+          address: string
+          category: string
+          date: string
+          distance_km: number
+          id: string
+          image_url: string
+          lat: number
+          lng: number
+          name: string
+          scraped_at: string
+          source_id: string
+          venue: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
