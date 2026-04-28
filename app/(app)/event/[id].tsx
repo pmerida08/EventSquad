@@ -1,3 +1,4 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -105,7 +106,7 @@ export default function EventDetailScreen() {
           style={[styles.floatingBack, { top: insets.top + 10 }]}
           onPress={() => router.back()}
         >
-          <Text style={styles.floatingBackText}>←</Text>
+          <FontAwesome name="arrow-left" size={16} color="#fff" />
         </Pressable>
 
         <View style={styles.body}>
@@ -191,7 +192,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center', justifyContent: 'center',
   },
-  floatingBackText: { color: '#fff', fontSize: 20, lineHeight: 20, includeFontPadding: false, textAlignVertical: 'center' },
   body:            { padding: 20 },
   metaRow:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   categoryBadge:   { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
