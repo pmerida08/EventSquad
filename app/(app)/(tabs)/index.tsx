@@ -1,4 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
+import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -13,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EventCard } from '@/components/EventCard';
+import { useTheme, type Theme } from '@/constants/theme';
 import {
   fetchEventsNear,
   fetchAllEvents,
@@ -25,31 +27,31 @@ import { useLocationStore } from '@/stores/locationStore';
 const ALL_CAT = 'Todos';
 
 export default function EventsScreen() {
-  const coordinates    = useLocationStore((s) => s.coordinates);
-  const permGranted    = useLocationStore((s) => s.permissionGranted);
+  const t = useTheme();
+  const s = makeStyles(t);
 
-  const [events, setEvents]       = useState<(EventNear | EventRow)[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedCat, setSelectedCat] = useState<string>(ALL_CAT);
-  const [error, setError]         = useState<string | null>(null);
+  const coordinates = useLocationStore((s) => s.coordinates);
+  const permGranted = useLocationStore((s) => s.permissionGranted);
+
+  const [events, setEvents]             = useState<(EventNear | EventRow)[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [refreshing, setRefreshing]     = useState(false);
+  const [selectedCat, setSelectedCat]   = useState<string>(ALL_CAT);
+  const [error, setError]               = useState<string | null>(null);
 
   const loadEvents = useCallback(async (cat: string) => {
     try {
       setError(null);
       const category = cat === ALL_CAT ? undefined : cat;
-
       const data = coordinates
         ? await fetchEventsNear(coordinates.latitude, coordinates.longitude, 500, category)
         : await fetchAllEvents(category);
-
       setEvents(data);
     } catch (e) {
       setError((e as Error).message);
     }
   }, [coordinates]);
 
-  // Carga inicial y cuando cambian coordenadas o categoría
   useEffect(() => {
     setLoading(true);
     loadEvents(selectedCat).finally(() => setLoading(false));
@@ -61,63 +63,60 @@ export default function EventsScreen() {
     setRefreshing(false);
   }, [loadEvents, selectedCat]);
 
-  const categories = [ALL_CAT, ...EVENT_CATEGORIES];
-
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={s.container} edges={['top']}>
+      <StatusBar style={t.statusBar} />
+
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Eventos cerca de ti</Text>
+      <View style={s.header}>
+        <Text style={s.headerTitle}>Eventos cerca de ti</Text>
         {coordinates ? (
-          <Text style={styles.headerSub}>📍 Ubicación activa</Text>
+          <Text style={s.headerSub}>📍 Ubicación activa</Text>
         ) : permGranted === false ? (
-          <Text style={styles.headerSub}>📍 Activa ubicación para ver distancias</Text>
+          <Text style={s.headerSub}>📍 Activa ubicación para ver distancias</Text>
         ) : (
-          <Text style={styles.headerSub}>📍 Buscando ubicación…</Text>
+          <Text style={s.headerSub}>📍 Buscando ubicación…</Text>
         )}
       </View>
 
-      {/* Filtros de categoría */}
+      {/* Filtros */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtersRow}
-        style={styles.filtersScroll}
+        contentContainerStyle={s.filtersRow}
+        style={s.filtersScroll}
       >
-        {categories.map((cat) => (
+        {[ALL_CAT, ...EVENT_CATEGORIES].map((cat) => (
           <Pressable
             key={cat}
-            style={[styles.chip, selectedCat === cat && styles.chipActive]}
+            style={[s.chip, selectedCat === cat && s.chipActive]}
             onPress={() => setSelectedCat(cat)}
           >
-            <Text style={[styles.chipText, selectedCat === cat && styles.chipTextActive]}>
+            <Text style={[s.chipText, selectedCat === cat && s.chipTextActive]}>
               {cat.charAt(0).toUpperCase() + cat.slice(1)}
             </Text>
           </Pressable>
         ))}
       </ScrollView>
 
-      {/* Contenido */}
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
-          <Text style={styles.loadingText}>Cargando eventos…</Text>
+        <View style={s.center}>
+          <ActivityIndicator size="large" color={t.primary} />
+          <Text style={s.loadingText}>Cargando eventos…</Text>
         </View>
       ) : error ? (
-        <View style={styles.center}>
-          <Text style={styles.errorEmoji}>⚠️</Text>
-          <Text style={styles.errorText}>{error}</Text>
-          <Pressable style={styles.retryBtn} onPress={() => loadEvents(selectedCat)}>
-            <Text style={styles.retryText}>Reintentar</Text>
+        <View style={s.center}>
+          <Text style={s.errorEmoji}>⚠️</Text>
+          <Text style={s.errorText}>{error}</Text>
+          <Pressable style={s.retryBtn} onPress={() => loadEvents(selectedCat)}>
+            <Text style={s.retryText}>Reintentar</Text>
           </Pressable>
         </View>
       ) : events.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyEmoji}>🔍</Text>
-          <Text style={styles.emptyTitle}>Sin eventos</Text>
-          <Text style={styles.emptySubtitle}>
-            No hay eventos de esta categoría cerca de ti.
-          </Text>
+        <View style={s.center}>
+          <Text style={s.emptyEmoji}>🔍</Text>
+          <Text style={s.emptyTitle}>Sin eventos</Text>
+          <Text style={s.emptySubtitle}>No hay eventos de esta categoría cerca de ti.</Text>
         </View>
       ) : (
         <FlashList
@@ -125,44 +124,37 @@ export default function EventsScreen() {
           estimatedItemSize={260}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <EventCard
-              event={item}
-              onPress={() => router.push(`/(app)/event/${item.id}`)}
-            />
+            <EventCard event={item} onPress={() => router.push(`/(app)/event/${item.id}`)} />
           )}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366F1" />
-          }
-          contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={t.primary} />}
+          contentContainerStyle={s.list}
         />
       )}
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: '#F9FAFB' },
-  header:       { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
-  headerTitle:  { fontSize: 24, fontWeight: '800', color: '#111827' },
-  headerSub:    { fontSize: 13, color: '#6B7280', marginTop: 2 },
-  filtersScroll:{ maxHeight: 52 },
-  filtersRow:   { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
-  chip: {
-    paddingHorizontal: 16, paddingVertical: 6,
-    borderRadius: 20, backgroundColor: '#fff',
-    borderWidth: 1.5, borderColor: '#E5E7EB',
-  },
-  chipActive:     { backgroundColor: '#6366F1', borderColor: '#6366F1' },
-  chipText:       { fontSize: 13, fontWeight: '600', color: '#374151' },
-  chipTextActive: { color: '#fff' },
-  list:       { paddingVertical: 8, paddingBottom: 24 },
-  center:     { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  loadingText:  { marginTop: 12, color: '#6B7280', fontSize: 15 },
-  errorEmoji:   { fontSize: 48, marginBottom: 12 },
-  errorText:    { color: '#EF4444', textAlign: 'center', marginBottom: 16 },
-  retryBtn:     { backgroundColor: '#6366F1', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 },
-  retryText:    { color: '#fff', fontWeight: '600' },
-  emptyEmoji:   { fontSize: 48, marginBottom: 12 },
-  emptyTitle:   { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 8 },
-  emptySubtitle:{ fontSize: 14, color: '#6B7280', textAlign: 'center' },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    container:    { flex: 1, backgroundColor: t.background },
+    header:       { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
+    headerTitle:  { fontSize: 24, fontWeight: '800', color: t.text },
+    headerSub:    { fontSize: 13, color: t.textSecondary, marginTop: 2 },
+    filtersScroll:{ maxHeight: 52 },
+    filtersRow:   { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
+    chip:         { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, backgroundColor: t.surface, borderWidth: 1.5, borderColor: t.border },
+    chipActive:   { backgroundColor: t.primary, borderColor: t.primary },
+    chipText:     { fontSize: 13, fontWeight: '600', color: t.textSecondary },
+    chipTextActive:{ color: '#fff' },
+    list:         { paddingVertical: 8, paddingBottom: 24 },
+    center:       { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+    loadingText:  { marginTop: 12, color: t.textSecondary, fontSize: 15 },
+    errorEmoji:   { fontSize: 48, marginBottom: 12 },
+    errorText:    { color: t.red, textAlign: 'center', marginBottom: 16 },
+    retryBtn:     { backgroundColor: t.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 },
+    retryText:    { color: '#fff', fontWeight: '600' },
+    emptyEmoji:   { fontSize: 48, marginBottom: 12 },
+    emptyTitle:   { fontSize: 18, fontWeight: '700', color: t.text, marginBottom: 8 },
+    emptySubtitle:{ fontSize: 14, color: t.textSecondary, textAlign: 'center' },
+  });
+}

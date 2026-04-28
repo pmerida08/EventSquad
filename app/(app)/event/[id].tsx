@@ -1,4 +1,6 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Image } from 'expo-image';
+import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -10,7 +12,7 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // react-native-maps requiere un development build (no funciona en Expo Go).
 // Se sustituye por un botón que abre Google Maps externamente.
@@ -42,6 +44,7 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const coordinates = useLocationStore((s) => s.coordinates);
+  const insets = useSafeAreaInsets();
 
   const [event, setEvent]     = useState<EventRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +89,8 @@ export default function EventDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      {/* Hero image is dark → always light icons over it */}
+      <StatusBar style="light" />
       <ScrollView bounces showsVerticalScrollIndicator={false}>
         {/* Hero image */}
         {event.image_url ? (
@@ -96,9 +101,12 @@ export default function EventDetailScreen() {
           </View>
         )}
 
-        {/* Back button flotante */}
-        <Pressable style={styles.floatingBack} onPress={() => router.back()}>
-          <Text style={styles.floatingBackText}>←</Text>
+        {/* Back button flotante — top ajustado al safe area */}
+        <Pressable
+          style={[styles.floatingBack, { top: insets.top + 10 }]}
+          onPress={() => router.back()}
+        >
+          <FontAwesome name="arrow-left" size={16} color="#fff" />
         </Pressable>
 
         <View style={styles.body}>
@@ -145,7 +153,7 @@ export default function EventDetailScreen() {
             </Text>
             <Pressable
               style={[styles.groupsBtn, { backgroundColor: color }]}
-              onPress={() => router.push(`/(app)/group/${event.id}/index` as never)}
+              onPress={() => router.push(`/(app)/event-groups/${event.id}` as never)}
             >
               <Text style={styles.groupsBtnText}>Ver grupos →</Text>
             </Pressable>
@@ -184,7 +192,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center', justifyContent: 'center',
   },
-  floatingBackText: { color: '#fff', fontSize: 20, lineHeight: 22 },
   body:            { padding: 20 },
   metaRow:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   categoryBadge:   { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },

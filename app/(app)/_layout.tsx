@@ -17,11 +17,19 @@ export default function AppLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
         name="event/[id]"
-        options={{ headerShown: true, title: 'Evento', headerBackTitle: 'Atrás' }}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="event-groups/[eventId]"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="create-group"
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="group/[id]/index"
-        options={{ headerShown: true, title: 'Grupo', headerBackTitle: 'Atrás' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="group/[id]/chat"
