@@ -16,6 +16,15 @@ export type Database = {
         Update: { address?: string; category?: string; date?: string; id?: string; image_url?: string | null; lat?: number; lng?: number; name?: string; scraped_at?: string; source_id?: string | null; venue?: string }
         Relationships: []
       }
+      messages: {
+        Row: { id: string; group_id: string; user_id: string; content: string; created_at: string }
+        Insert: { id?: string; group_id: string; user_id: string; content: string; created_at?: string }
+        Update: { id?: string; group_id?: string; user_id?: string; content?: string; created_at?: string }
+        Relationships: [
+          { foreignKeyName: "messages_group_id_fkey"; columns: ["group_id"]; isOneToOne: false; referencedRelation: "groups"; referencedColumns: ["id"] },
+          { foreignKeyName: "messages_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ]
+      }
       group_members: {
         Row: { group_id: string; joined_at: string; role: string; user_id: string }
         Insert: { group_id: string; joined_at?: string; role?: string; user_id: string }

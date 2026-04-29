@@ -64,6 +64,19 @@ interface TmResponse {
   page?: { totalPages?: number }
 }
 
+type EventRow = {
+  name:       string
+  date:       string
+  venue:      string
+  address:    string
+  lat:        number
+  lng:        number
+  image_url:  string | null
+  category:   string
+  source_id:  string
+  scraped_at: string
+}
+
 // ── Fetch de una página de eventos ───────────────────────────────────────────
 async function fetchPage(apiKey: string, page: number): Promise<TmResponse> {
   const params = new URLSearchParams({
@@ -100,18 +113,18 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   )
 
-  let totalUpserted = 0
   let page = 0
   let totalPages = 1
+  const allRows: EventRow[] = []
 
   try {
-    // Máximo 5 páginas × 200 eventos = 1 000 eventos por ejecución
+    // ── 1. Recoger todos los eventos de la API (máx. 5 páginas × 200) ──────────
     while (page < totalPages && page < 5) {
       const data = await fetchPage(apiKey, page)
       totalPages = data.page?.totalPages ?? 1
 
       const rows = (data._embedded?.events ?? [])
-        .map((event: TmEvent) => {
+        .map((event: TmEvent): EventRow | null => {
           const venue = event._embedded?.venues?.[0]
           if (!venue?.location?.latitude || !venue?.location?.longitude) return null
 
@@ -121,6 +134,13 @@ Deno.serve(async (req) => {
 
           const dateTime = event.dates?.start?.dateTime
           if (!dateTime) return null
+
+          // Excluir listados secundarios (VIP packages, upgrades)
+          if (
+            event.name.includes(' | VIP') ||
+            event.name.includes(' - UPGRADE') ||
+            event.name.includes(' - VIP')
+          ) return null
 
           const address = [venue.address?.line1, venue.city?.name]
             .filter(Boolean).join(', ') || venue.city?.name || 'España'
@@ -138,22 +158,59 @@ Deno.serve(async (req) => {
             scraped_at: new Date().toISOString(),
           }
         })
-        .filter(Boolean)
+        .filter((r): r is EventRow => r !== null)
 
-      if (rows.length > 0) {
-        const { error } = await supabase
-          .from('events')
-          .upsert(rows, { onConflict: 'source_id' })
-        if (error) throw new Error(`Supabase upsert error: ${error.message}`)
-        totalUpserted += rows.length
-      }
-
-      console.log(`Page ${page + 1}/${totalPages} — ${rows.length} events processed`)
+      allRows.push(...rows)
+      console.log(`Página ${page + 1}/${totalPages} — ${rows.length} eventos recogidos`)
       page++
     }
 
+    // ── 2. Deduplicar en memoria ──────────────────────────────────────────────
+    // Por cada par (name, venue), conservar solo el evento con la fecha más
+    // próxima en el futuro. Así la base de datos siempre tendrá un único
+    // registro por show+recinto y nunca se verán duplicados en la app.
+    const now = new Date()
+    const deduped = new Map<string, EventRow>()
+
+    for (const row of allRows) {
+      const eventDate = new Date(row.date)
+      if (eventDate <= now) continue                    // descartar eventos pasados
+
+      const key = `${row.name}|||${row.venue}`
+      const existing = deduped.get(key)
+
+      if (!existing || eventDate < new Date(existing.date)) {
+        deduped.set(key, row)                           // conservar la fecha más próxima
+      }
+    }
+
+    const uniqueRows = Array.from(deduped.values())
+
+    console.log(`Total recogidos: ${allRows.length} | Tras deduplicación: ${uniqueRows.length}`)
+
+    // ── 3. Insertar en la base de datos (ya deduplicados) ─────────────────────
+    // El conflict en (name, venue) actualiza el registro existente si el show
+    // ya estaba guardado con una fecha anterior que ahora necesita actualizarse.
+    if (uniqueRows.length > 0) {
+      const BATCH = 200
+      for (let i = 0; i < uniqueRows.length; i += BATCH) {
+        const batch = uniqueRows.slice(i, i + BATCH)
+        const { error } = await supabase
+          .from('events')
+          .upsert(batch, { onConflict: 'name,venue' })
+        if (error) throw new Error(`Supabase upsert error: ${error.message}`)
+        console.log(`Batch ${Math.floor(i / BATCH) + 1}: ${batch.length} eventos insertados/actualizados`)
+      }
+    }
+
     return new Response(
-      JSON.stringify({ success: true, upserted: totalUpserted, pages: page }),
+      JSON.stringify({
+        success:    true,
+        fetched:    allRows.length,
+        upserted:   uniqueRows.length,
+        pages:      page,
+        duplicates_removed: allRows.length - uniqueRows.length,
+      }),
       { headers: { 'Content-Type': 'application/json' } },
     )
   } catch (err) {

@@ -33,7 +33,7 @@ export default function AppLayout() {
       />
       <Stack.Screen
         name="group/[id]/chat"
-        options={{ headerShown: true, title: 'Chat', headerBackTitle: 'Atrás' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="group/[id]/voting"

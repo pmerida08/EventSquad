@@ -55,10 +55,13 @@ export async function fetchEventsNear(
 
 /** Obtiene todos los eventos sin filtro de ubicación, ordenados por fecha */
 export async function fetchAllEvents(category?: string): Promise<EventRow[]> {
+  // Misma ventana temporal que events_near: excluir eventos terminados hace >2h
+  const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+
   let query = supabase
     .from('events')
     .select('*')
-    .gte('date', new Date().toISOString())
+    .gte('date', cutoff)
     .order('date', { ascending: true });
 
   if (category) query = query.eq('category', category);

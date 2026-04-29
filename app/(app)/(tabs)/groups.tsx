@@ -92,7 +92,7 @@ function MyGroupCard({ group, theme: t, styles: s }: { group: MyGroup; theme: Th
   return (
     <Pressable
       style={s.card}
-      onPress={() => router.push(`/(app)/group/${group.id}/index` as never)}
+      onPress={() => router.push(`/(app)/group/${group.id}` as never)}
       android_ripple={{ color: t.primaryBg }}
     >
       {group.events?.image_url ? (

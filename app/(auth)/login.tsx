@@ -1,3 +1,4 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -22,10 +23,11 @@ export default function LoginScreen() {
   const t = useTheme();
   const s = makeStyles(t);
 
-  const [email, setEmail]               = useState('');
-  const [password, setPassword]         = useState('');
-  const [loading, setLoading]           = useState(false);
-  const [magicLinkSent, setMagicLink]   = useState(false);
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [magicLinkSent, setMagicLink] = useState(false);
 
   async function handleSignIn() {
     if (!email.trim() || !password.trim()) {
@@ -60,10 +62,12 @@ export default function LoginScreen() {
 
   if (magicLinkSent) {
     return (
-      <SafeAreaView style={s.container}>
+      <SafeAreaView style={s.container} edges={['top', 'bottom']}>
         <StatusBar style={t.statusBar} />
         <View style={s.centerContent}>
-          <Text style={s.bigEmoji}>📬</Text>
+          <View style={s.iconCircle}>
+            <FontAwesome name="envelope" size={32} color={t.primary} />
+          </View>
           <Text style={s.title}>Revisa tu email</Text>
           <Text style={s.subtitle}>
             Hemos enviado un enlace mágico a{'\n'}
@@ -78,44 +82,63 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView style={s.container}>
+    <SafeAreaView style={s.container} edges={['top', 'bottom']}>
       <StatusBar style={t.statusBar} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-          <Pressable onPress={() => router.back()} style={s.backButton}>
-            <Text style={s.backText}>← Atrás</Text>
+          {/* Botón atrás */}
+          <Pressable onPress={() => router.back()} style={s.backButton} hitSlop={12}>
+            <FontAwesome name="arrow-left" size={16} color={t.primary} />
+            <Text style={s.backText}>Atrás</Text>
           </Pressable>
 
           <Text style={s.title}>Bienvenido de nuevo</Text>
           <Text style={s.subtitle}>Inicia sesión en tu cuenta</Text>
 
           <View style={s.form}>
+            {/* Email */}
             <View style={s.field}>
               <Text style={s.label}>Email</Text>
-              <TextInput
-                style={s.input}
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                textContentType="emailAddress"
-                placeholder="tú@ejemplo.com"
-                placeholderTextColor={t.textTertiary}
-              />
+              <View style={s.inputWrapper}>
+                <FontAwesome name="envelope-o" size={15} color={t.textTertiary} style={s.inputIcon} />
+                <TextInput
+                  style={s.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  textContentType="emailAddress"
+                  autoComplete="email"
+                  placeholder="tú@ejemplo.com"
+                  placeholderTextColor={t.textTertiary}
+                />
+              </View>
             </View>
 
+            {/* Contraseña */}
             <View style={s.field}>
               <Text style={s.label}>Contraseña</Text>
-              <TextInput
-                style={s.input}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                textContentType="password"
-                placeholder="••••••••"
-                placeholderTextColor={t.textTertiary}
-              />
+              <View style={s.inputWrapper}>
+                <FontAwesome name="lock" size={16} color={t.textTertiary} style={s.inputIcon} />
+                <TextInput
+                  style={s.input}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  textContentType="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  placeholderTextColor={t.textTertiary}
+                />
+                <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={8} style={s.eyeBtn}>
+                  <FontAwesome
+                    name={showPassword ? 'eye-slash' : 'eye'}
+                    size={16}
+                    color={t.textTertiary}
+                  />
+                </Pressable>
+              </View>
             </View>
 
             <Pressable
@@ -123,7 +146,9 @@ export default function LoginScreen() {
               onPress={handleSignIn}
               disabled={loading}
             >
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryButtonText}>Iniciar sesión</Text>}
+              {loading
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={s.primaryButtonText}>Iniciar sesión</Text>}
             </Pressable>
 
             <View style={s.divider}>
@@ -133,7 +158,8 @@ export default function LoginScreen() {
             </View>
 
             <Pressable style={s.magicLinkButton} onPress={handleMagicLink} disabled={loading}>
-              <Text style={s.magicLinkText}>✨ Enviarme un enlace mágico</Text>
+              <FontAwesome name="magic" size={15} color={t.primary} style={{ marginRight: 8 }} />
+              <Text style={s.magicLinkText}>Enviarme un enlace mágico</Text>
             </Pressable>
           </View>
 
@@ -151,31 +177,34 @@ export default function LoginScreen() {
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    container:      { flex: 1, backgroundColor: t.background },
-    scroll:         { flexGrow: 1, paddingHorizontal: 28, paddingVertical: 24 },
-    backButton:     { marginBottom: 32 },
-    backText:       { fontSize: 16, color: t.primary, fontWeight: '500' },
-    title:          { fontSize: 28, fontWeight: '800', color: t.text, marginBottom: 8 },
-    subtitle:       { fontSize: 16, color: t.textSecondary, marginBottom: 32 },
-    form:           { gap: 16 },
-    field:          { gap: 6 },
-    label:          { fontSize: 14, fontWeight: '600', color: t.textSecondary },
-    input:          { backgroundColor: t.inputBg, borderWidth: 1.5, borderColor: t.inputBorder, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: t.text },
-    primaryButton:  { backgroundColor: t.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
-    buttonDisabled: { opacity: 0.6 },
-    primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-    divider:        { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    dividerLine:    { flex: 1, height: 1, backgroundColor: t.border },
-    dividerText:    { fontSize: 14, color: t.textTertiary },
-    magicLinkButton:{ backgroundColor: t.surface2, borderWidth: 1.5, borderColor: t.border, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-    magicLinkText:  { color: t.text, fontSize: 15, fontWeight: '600' },
-    footer:         { flexDirection: 'row', justifyContent: 'center', marginTop: 32, paddingBottom: 16 },
-    footerText:     { fontSize: 15, color: t.textSecondary },
-    footerLink:     { fontSize: 15, color: t.primary, fontWeight: '600' },
-    centerContent:  { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-    bigEmoji:       { fontSize: 64, marginBottom: 24 },
-    emailHighlight: { fontWeight: '700', color: t.text },
-    linkButton:     { marginTop: 24 },
-    linkText:       { color: t.primary, fontSize: 15, fontWeight: '500' },
+    container:          { flex: 1, backgroundColor: t.background },
+    scroll:             { flexGrow: 1, paddingHorizontal: 28, paddingVertical: 24 },
+    backButton:         { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 32 },
+    backText:           { fontSize: 16, color: t.primary, fontWeight: '500' },
+    title:              { fontSize: 28, fontWeight: '800', color: t.text, marginBottom: 8 },
+    subtitle:           { fontSize: 16, color: t.textSecondary, marginBottom: 32 },
+    form:               { gap: 16 },
+    field:              { gap: 6 },
+    label:              { fontSize: 14, fontWeight: '600', color: t.textSecondary },
+    inputWrapper:       { flexDirection: 'row', alignItems: 'center', backgroundColor: t.inputBg, borderWidth: 1.5, borderColor: t.inputBorder, borderRadius: 12, paddingHorizontal: 14 },
+    inputIcon:          { marginRight: 10, width: 18, textAlign: 'center' },
+    input:              { flex: 1, paddingVertical: 14, fontSize: 16, color: t.text },
+    eyeBtn:             { padding: 4, marginLeft: 4 },
+    primaryButton:      { backgroundColor: t.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+    buttonDisabled:     { opacity: 0.6 },
+    primaryButtonText:  { color: '#fff', fontSize: 16, fontWeight: '700' },
+    divider:            { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    dividerLine:        { flex: 1, height: 1, backgroundColor: t.border },
+    dividerText:        { fontSize: 14, color: t.textTertiary },
+    magicLinkButton:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: t.surface2, borderWidth: 1.5, borderColor: t.border, borderRadius: 14, paddingVertical: 16 },
+    magicLinkText:      { color: t.primary, fontSize: 15, fontWeight: '600' },
+    footer:             { flexDirection: 'row', justifyContent: 'center', marginTop: 32, paddingBottom: 16 },
+    footerText:         { fontSize: 15, color: t.textSecondary },
+    footerLink:         { fontSize: 15, color: t.primary, fontWeight: '600' },
+    centerContent:      { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
+    iconCircle:         { width: 80, height: 80, borderRadius: 40, backgroundColor: t.primaryBg, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+    emailHighlight:     { fontWeight: '700', color: t.text },
+    linkButton:         { marginTop: 24 },
+    linkText:           { color: t.primary, fontSize: 15, fontWeight: '500' },
   });
 }
