@@ -40,7 +40,8 @@ export default function OnboardingScreen() {
       <StatusBar style={t.statusBar} />
 
       <View style={s.content}>
-        {/* Logo */}
+
+        {/* Logo centrado */}
         <View style={s.logoWrapper}>
           <Image
             source={require('@/assets/images/icon.png')}
@@ -48,6 +49,7 @@ export default function OnboardingScreen() {
             contentFit="contain"
           />
           <Text style={s.logoText}>EventSquad</Text>
+          <Text style={s.logoSub}>Vive la música con tu gente</Text>
         </View>
 
         {/* Cards */}
@@ -91,25 +93,26 @@ export default function OnboardingScreen() {
 function makeStyles(t: Theme) {
   return StyleSheet.create({
     container:           { flex: 1, backgroundColor: t.background },
-    content:             { flex: 1, paddingHorizontal: 28, paddingTop: 32 },
+    content:             { flex: 1, paddingHorizontal: 28, paddingTop: 24 },
 
-    // Logo row
-    logoWrapper:         { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 48 },
-    logoImage:           { width: 38, height: 38 },
-    logoText:            { fontSize: 28, fontWeight: '800', color: t.primary, letterSpacing: -0.5 },
+    // Logo — centrado y grande
+    logoWrapper:         { alignItems: 'center', marginBottom: 40 },
+    logoImage:           { width: 96, height: 96, marginBottom: 14 },
+    logoText:            { fontSize: 32, fontWeight: '800', color: t.primary, letterSpacing: -0.5 },
+    logoSub:             { fontSize: 14, color: t.textSecondary, marginTop: 4 },
 
     // Feature cards
-    slides:              { gap: 16 },
+    slides:              { gap: 14 },
     slide:               {
       flexDirection: 'row', alignItems: 'center', gap: 16,
-      backgroundColor: t.surface, borderRadius: 16, padding: 20,
+      backgroundColor: t.surface, borderRadius: 16, padding: 18,
       shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
     },
     iconWrap:            { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     slideTextWrap:       { flex: 1 },
-    slideTitle:          { fontSize: 16, fontWeight: '700', color: t.text, marginBottom: 4 },
-    slideDesc:           { fontSize: 14, color: t.textSecondary, lineHeight: 20 },
+    slideTitle:          { fontSize: 15, fontWeight: '700', color: t.text, marginBottom: 3 },
+    slideDesc:           { fontSize: 13, color: t.textSecondary, lineHeight: 19 },
 
     // Actions
     actions:             { paddingHorizontal: 28, paddingBottom: 24, gap: 12 },
