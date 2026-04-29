@@ -1,3 +1,5 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
@@ -7,18 +9,24 @@ import { useTheme, type Theme } from '@/constants/theme';
 
 const SLIDES = [
   {
-    emoji: '🎵',
-    title: 'Eventos para todos',
+    icon:        'music' as const,
+    iconColor:   '#6366F1',
+    iconBg:      '#EEF2FF',
+    title:       'Eventos para todos',
     description: 'Conciertos, festivales, fiestas... Descubre lo que pasa cerca de ti.',
   },
   {
-    emoji: '👥',
-    title: 'Encuentra tu squad',
+    icon:        'users' as const,
+    iconColor:   '#3B82F6',
+    iconBg:      '#EFF6FF',
+    title:       'Encuentra tu squad',
     description: 'Únete a grupos de gente que va al mismo evento. Nunca más vayas solo.',
   },
   {
-    emoji: '📍',
-    title: 'Punto de encuentro',
+    icon:        'map-marker' as const,
+    iconColor:   '#EF4444',
+    iconBg:      '#FEE2E2',
+    title:       'Punto de encuentro',
     description: 'Votad juntos dónde y cuándo quedar antes del evento.',
   },
 ];
@@ -34,7 +42,11 @@ export default function OnboardingScreen() {
       <View style={s.content}>
         {/* Logo */}
         <View style={s.logoWrapper}>
-          <Text style={s.logoEmoji}>⚡</Text>
+          <Image
+            source={require('@/assets/images/icon.png')}
+            style={s.logoImage}
+            contentFit="contain"
+          />
           <Text style={s.logoText}>EventSquad</Text>
         </View>
 
@@ -42,7 +54,9 @@ export default function OnboardingScreen() {
         <View style={s.slides}>
           {SLIDES.map((slide) => (
             <View key={slide.title} style={s.slide}>
-              <Text style={s.slideEmoji}>{slide.emoji}</Text>
+              <View style={[s.iconWrap, { backgroundColor: slide.iconBg }]}>
+                <FontAwesome name={slide.icon} size={20} color={slide.iconColor} />
+              </View>
               <View style={s.slideTextWrap}>
                 <Text style={s.slideTitle}>{slide.title}</Text>
                 <Text style={s.slideDesc}>{slide.description}</Text>
@@ -53,10 +67,20 @@ export default function OnboardingScreen() {
       </View>
 
       <View style={s.actions}>
-        <Pressable style={s.primaryButton} onPress={() => router.push('/(auth)/register')}>
+        <Pressable
+          style={s.primaryButton}
+          onPress={() => router.push('/(auth)/register')}
+          accessibilityRole="button"
+          accessibilityLabel="Crear cuenta"
+        >
           <Text style={s.primaryButtonText}>Crear cuenta</Text>
         </Pressable>
-        <Pressable style={s.secondaryButton} onPress={() => router.push('/(auth)/login')}>
+        <Pressable
+          style={s.secondaryButton}
+          onPress={() => router.push('/(auth)/login')}
+          accessibilityRole="button"
+          accessibilityLabel="Ya tengo cuenta"
+        >
           <Text style={s.secondaryButtonText}>Ya tengo cuenta</Text>
         </Pressable>
       </View>
@@ -66,21 +90,32 @@ export default function OnboardingScreen() {
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    container:        { flex: 1, backgroundColor: t.background },
-    content:          { flex: 1, paddingHorizontal: 28, paddingTop: 32 },
-    logoWrapper:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 48 },
-    logoEmoji:        { fontSize: 32 },
-    logoText:         { fontSize: 28, fontWeight: '800', color: t.primary, letterSpacing: -0.5 },
-    slides:           { gap: 24 },
-    slide:            { flexDirection: 'row', alignItems: 'flex-start', gap: 16, backgroundColor: t.surface, borderRadius: 16, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
-    slideEmoji:       { fontSize: 36 },
-    slideTextWrap:    { flex: 1 },
-    slideTitle:       { fontSize: 16, fontWeight: '700', color: t.text, marginBottom: 4 },
-    slideDesc:        { fontSize: 14, color: t.textSecondary, lineHeight: 20 },
-    actions:          { paddingHorizontal: 28, paddingBottom: 24, gap: 12 },
-    primaryButton:    { backgroundColor: t.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-    primaryButtonText:{ color: '#fff', fontSize: 16, fontWeight: '700' },
-    secondaryButton:  { backgroundColor: t.primaryBg, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+    container:           { flex: 1, backgroundColor: t.background },
+    content:             { flex: 1, paddingHorizontal: 28, paddingTop: 32 },
+
+    // Logo row
+    logoWrapper:         { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 48 },
+    logoImage:           { width: 38, height: 38 },
+    logoText:            { fontSize: 28, fontWeight: '800', color: t.primary, letterSpacing: -0.5 },
+
+    // Feature cards
+    slides:              { gap: 16 },
+    slide:               {
+      flexDirection: 'row', alignItems: 'center', gap: 16,
+      backgroundColor: t.surface, borderRadius: 16, padding: 20,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    },
+    iconWrap:            { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    slideTextWrap:       { flex: 1 },
+    slideTitle:          { fontSize: 16, fontWeight: '700', color: t.text, marginBottom: 4 },
+    slideDesc:           { fontSize: 14, color: t.textSecondary, lineHeight: 20 },
+
+    // Actions
+    actions:             { paddingHorizontal: 28, paddingBottom: 24, gap: 12 },
+    primaryButton:       { backgroundColor: t.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+    primaryButtonText:   { color: '#fff', fontSize: 16, fontWeight: '700' },
+    secondaryButton:     { backgroundColor: t.primaryBg, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
     secondaryButtonText: { color: t.primary, fontSize: 16, fontWeight: '600' },
   });
 }
