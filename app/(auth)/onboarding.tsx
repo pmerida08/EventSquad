@@ -44,7 +44,7 @@ export default function OnboardingScreen() {
         {/* Logo centrado */}
         <View style={s.logoWrapper}>
           <Image
-            source={require('@/assets/images/icon.png')}
+            source={require('@/assets/images/logoEventSquad.jpg')}
             style={s.logoImage}
             contentFit="contain"
           />
@@ -97,7 +97,7 @@ function makeStyles(t: Theme) {
 
     // Logo — centrado y grande
     logoWrapper:         { alignItems: 'center', marginBottom: 40 },
-    logoImage:           { width: 96, height: 96, marginBottom: 14 },
+    logoImage:           { width: 130, height: 130, marginBottom: 14 },
     logoText:            { fontSize: 32, fontWeight: '800', color: t.primary, letterSpacing: -0.5 },
     logoSub:             { fontSize: 14, color: t.textSecondary, marginTop: 4 },
 
