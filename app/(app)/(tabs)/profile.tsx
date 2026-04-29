@@ -1,3 +1,4 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
@@ -74,7 +75,8 @@ export default function ProfileScreen() {
               <VerifiedBadge size="md" />
             ) : (
               <Pressable style={s.unverifiedBadge} onPress={() => router.push('/(auth)/verify-identity')}>
-                <Text style={s.unverifiedText}>⚠️ No verificado — Verificar ahora</Text>
+                <FontAwesome name="exclamation-triangle" size={12} color="#92400E" style={{ marginRight: 6 }} />
+                <Text style={s.unverifiedText}>No verificado — Verificar ahora</Text>
               </Pressable>
             )}
           </View>
@@ -95,11 +97,17 @@ export default function ProfileScreen() {
         {/* Banner verificación */}
         {!profile.verified && (
           <Pressable style={s.verifyBanner} onPress={() => router.push('/(auth)/verify-identity')}>
-            <Text style={s.verifyBannerTitle}>🛡️ Verifica tu identidad</Text>
+            <View style={s.verifyBannerHeader}>
+              <FontAwesome name="shield" size={16} color={t.primary} style={{ marginRight: 8 }} />
+              <Text style={s.verifyBannerTitle}>Verifica tu identidad</Text>
+            </View>
             <Text style={s.verifyBannerText}>
               Necesitas verificarte para unirte a grupos de eventos. Solo tarda 30 segundos.
             </Text>
-            <Text style={s.verifyBannerCta}>Verificar ahora →</Text>
+            <View style={s.verifyBannerCtaRow}>
+              <Text style={s.verifyBannerCta}>Verificar ahora</Text>
+              <FontAwesome name="chevron-right" size={12} color={t.primary} />
+            </View>
           </Pressable>
         )}
 
@@ -146,17 +154,19 @@ function makeStyles(t: Theme) {
     displayName:    { fontSize: 22, fontWeight: '700', color: t.text, marginBottom: 4 },
     email:          { fontSize: 14, color: t.textTertiary, marginBottom: 12 },
     badges:         { flexDirection: 'row', gap: 8 },
-    unverifiedBadge:{ backgroundColor: t.amberBg, borderWidth: 1, borderColor: '#FCD34D', borderRadius: 99, paddingHorizontal: 10, paddingVertical: 4 },
+    unverifiedBadge:{ flexDirection: 'row', alignItems: 'center', backgroundColor: t.amberBg, borderWidth: 1, borderColor: '#FCD34D', borderRadius: 99, paddingHorizontal: 10, paddingVertical: 4 },
     unverifiedText: { fontSize: 12, color: '#92400E', fontWeight: '600' },
     section:        { marginBottom: 16 },
     sectionTitle:   { fontSize: 13, fontWeight: '700', color: t.textTertiary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
     bio:            { fontSize: 15, color: t.text, lineHeight: 22, backgroundColor: t.surface, borderRadius: 12, padding: 16 },
     emptyBioCard:   { backgroundColor: t.surface, borderRadius: 12, padding: 16, borderWidth: 1.5, borderColor: t.border, borderStyle: 'dashed', alignItems: 'center', marginBottom: 16 },
     emptyBioText:   { color: t.textTertiary, fontSize: 15 },
-    verifyBanner:   { backgroundColor: t.primaryBg, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#C7D2FE', marginBottom: 16 },
-    verifyBannerTitle: { fontSize: 16, fontWeight: '700', color: '#3730A3', marginBottom: 6 },
-    verifyBannerText:  { fontSize: 14, color: '#4338CA', lineHeight: 20, marginBottom: 10 },
-    verifyBannerCta:   { fontSize: 14, fontWeight: '700', color: t.primary },
+    verifyBanner:       { backgroundColor: t.primaryBg, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: t.primaryLight + '55', marginBottom: 16 },
+    verifyBannerHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+    verifyBannerTitle:  { fontSize: 16, fontWeight: '700', color: t.primary },
+    verifyBannerText:   { fontSize: 14, color: t.textSecondary, lineHeight: 20, marginBottom: 10 },
+    verifyBannerCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    verifyBannerCta:    { fontSize: 14, fontWeight: '700', color: t.primary },
     infoCard:       { backgroundColor: t.surface, borderRadius: 12, paddingHorizontal: 16, overflow: 'hidden' },
     infoRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
     divider:        { height: 1, backgroundColor: t.borderLight },
