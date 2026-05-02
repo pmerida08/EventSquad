@@ -1,69 +1,137 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome'
+import { useMemo } from 'react'
+import { View, Text, StyleSheet, Pressable } from 'react-native'
 
-// Tipo local hasta crear la vista `meetup_proposals_with_votes` en Fase 5
-export interface MeetupProposalWithVotes {
-  id: string;
-  group_id: string;
-  proposed_by: string;
-  location_name: string;
-  lat: number;
-  lng: number;
-  proposed_time: string;
-  selected: boolean;
-  created_at: string;
-  vote_count: number;
-}
-
-type Proposal = MeetupProposalWithVotes;
+import { useTheme, type Theme } from '@/constants/theme'
+import type { ProposalWithVotes } from '@/lib/voting'
 
 interface VotingCardProps {
-  proposal: Proposal;
-  totalMembers: number;
-  hasVoted: boolean;
-  onVote: () => void;
+  proposal:     ProposalWithVotes
+  totalMembers: number
+  hasVoted:     boolean   // true si el usuario ya votó en este grupo
+  onVote:       () => void
 }
 
 export function VotingCard({ proposal, totalMembers, hasVoted, onVote }: VotingCardProps) {
-  const progress = totalMembers > 0 ? proposal.vote_count / totalMembers : 0;
+  const t = useTheme()
+  const s = useMemo(() => makeStyles(t), [t])
+
+  const progress = totalMembers > 0 ? proposal.vote_count / totalMembers : 0
+  const dateStr  = new Date(proposal.proposed_time).toLocaleString('es-ES', {
+    weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  })
 
   return (
-    <View style={[styles.card, proposal.selected && styles.cardSelected]}>
-      {proposal.selected && <Text style={styles.winner}>Ganador ✓</Text>}
-      <Text style={styles.location}>{proposal.location_name}</Text>
-      <Text style={styles.time}>{new Date(proposal.proposed_time).toLocaleString('es-ES')}</Text>
+    <View style={[s.card, proposal.selected && s.cardSelected]}>
+      {proposal.selected && (
+        <View style={s.winnerRow}>
+          <FontAwesome name="trophy" size={12} color={t.primary} />
+          <Text style={s.winnerText}>Punto de encuentro elegido</Text>
+        </View>
+      )}
 
-      <View style={styles.progressWrapper}>
-        <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+      <Text style={s.location}>{proposal.location_name}</Text>
+
+      <View style={s.timeRow}>
+        <FontAwesome name="clock-o" size={13} color={t.textTertiary} />
+        <Text style={s.time}>{dateStr}</Text>
       </View>
-      <Text style={styles.votes}>
+
+      <View style={s.progressWrapper}>
+        <View style={[s.progressBar, { width: `${Math.min(1, progress) * 100}%` as any }]} />
+      </View>
+      <Text style={s.votes}>
         {proposal.vote_count} de {totalMembers} votos
       </Text>
 
       {!hasVoted && !proposal.selected && (
-        <Pressable style={styles.voteButton} onPress={onVote}>
-          <Text style={styles.voteButtonText}>Votar</Text>
+        <Pressable
+          style={s.voteButton}
+          onPress={onVote}
+          accessibilityRole="button"
+          accessibilityLabel={`Votar por ${proposal.location_name}`}
+        >
+          <FontAwesome name="check" size={14} color="#fff" />
+          <Text style={s.voteButtonText}>Votar</Text>
         </Pressable>
       )}
     </View>
-  );
+  )
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  cardSelected: { borderColor: '#6366F1', backgroundColor: '#EEF2FF' },
-  winner: { color: '#6366F1', fontSize: 12, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' },
-  location: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  time: { fontSize: 14, color: '#666', marginBottom: 12 },
-  progressWrapper: { height: 6, backgroundColor: '#E5E7EB', borderRadius: 3, marginBottom: 6 },
-  progressBar: { height: 6, backgroundColor: '#6366F1', borderRadius: 3 },
-  votes: { fontSize: 12, color: '#9CA3AF', marginBottom: 12 },
-  voteButton: { backgroundColor: '#6366F1', borderRadius: 8, padding: 10, alignItems: 'center' },
-  voteButtonText: { color: '#fff', fontWeight: '600' },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: t.surface,
+      borderRadius:    14,
+      padding:         16,
+      marginBottom:    12,
+      borderWidth:     1.5,
+      borderColor:     t.border,
+    },
+    cardSelected: {
+      borderColor:     t.primary,
+      backgroundColor: t.primaryBg,
+    },
+    winnerRow: {
+      flexDirection:  'row',
+      alignItems:     'center',
+      gap:            6,
+      marginBottom:   10,
+    },
+    winnerText: {
+      color:      t.primary,
+      fontSize:   12,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    location: {
+      fontSize:   16,
+      fontWeight: '700',
+      color:      t.text,
+      marginBottom: 6,
+    },
+    timeRow: {
+      flexDirection: 'row',
+      alignItems:    'center',
+      gap:           6,
+      marginBottom:  14,
+    },
+    time: {
+      fontSize: 13,
+      color:    t.textSecondary,
+    },
+    progressWrapper: {
+      height:          6,
+      backgroundColor: t.border,
+      borderRadius:    3,
+      marginBottom:    6,
+      overflow:        'hidden',
+    },
+    progressBar: {
+      height:          6,
+      backgroundColor: t.primary,
+      borderRadius:    3,
+    },
+    votes: {
+      fontSize:     12,
+      color:        t.textTertiary,
+      marginBottom: 14,
+    },
+    voteButton: {
+      flexDirection:  'row',
+      alignItems:     'center',
+      justifyContent: 'center',
+      gap:            8,
+      backgroundColor: t.primary,
+      borderRadius:    10,
+      paddingVertical: 10,
+    },
+    voteButtonText: {
+      color:      '#fff',
+      fontWeight: '700',
+      fontSize:   14,
+    },
+  })
+}

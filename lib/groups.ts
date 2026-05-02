@@ -128,9 +128,17 @@ export async function leaveGroup(groupId: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Elimina un grupo (solo el owner). El CASCADE borra miembros, mensajes y propuestas. */
+export async function deleteGroup(groupId: string): Promise<void> {
+  const { error } = await supabase
+    .from('groups')
+    .delete()
+    .eq('id', groupId);
+  if (error) throw error;
+}
+
 /** Parsea el código de error de join_group en un mensaje legible */
 export function parseGroupError(msg: string): string {
-  if (msg.includes('UNVERIFIED'))      return 'Debes verificar tu identidad antes de unirte a un grupo.';
   if (msg.includes('ALREADY_IN_GROUP')) return 'Ya estás en un grupo para este evento.';
   if (msg.includes('GROUP_FULL'))       return 'El grupo está completo.';
   if (msg.includes('NOT_FOUND'))        return 'Grupo no encontrado.';

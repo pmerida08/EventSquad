@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -24,7 +25,15 @@ import {
   subscribeToTyping,
   type MessageWithProfile,
 } from '@/lib/messages'
+import { reportUser, parseModerationError } from '@/lib/moderation'
 import { useAuthStore } from '@/stores/authStore'
+
+const REPORT_REASONS = [
+  'Comportamiento inapropiado',
+  'Spam o publicidad',
+  'Acoso o insultos',
+  'Otro',
+]
 
 // ── Burbuja de mensaje ────────────────────────────────────────────────────────
 
@@ -33,11 +42,13 @@ function MessageBubble({
   isMe,
   showAvatar,
   t,
+  onLongPress,
 }: {
   msg: MessageWithProfile
   isMe: boolean
   showAvatar: boolean
   t: Theme
+  onLongPress?: () => void
 }) {
   const s = useMemo(() => makeBubbleStyles(t), [t])
   const time = new Date(msg.created_at).toLocaleTimeString('es-ES', {
@@ -63,13 +74,22 @@ function MessageBubble({
         </View>
       )}
 
-      <View style={[s.bubble, isMe ? s.bubbleMe : s.bubbleThem]}>
-        {!isMe && showAvatar && (
-          <Text style={s.senderName}>{msg.profiles.display_name}</Text>
-        )}
-        <Text style={[s.content, isMe && s.contentMe]}>{msg.content}</Text>
-        <Text style={[s.time, isMe && s.timeMe]}>{time}</Text>
-      </View>
+      <Pressable
+        style={s.bubbleWrapper}
+        onLongPress={onLongPress}
+        delayLongPress={400}
+        disabled={!onLongPress}
+        accessibilityRole="button"
+        accessibilityLabel={onLongPress ? `Mensaje de ${msg.profiles.display_name}. Mantén pulsado para reportar` : undefined}
+      >
+        <View style={[s.bubble, isMe ? s.bubbleMe : s.bubbleThem]}>
+          {!isMe && showAvatar && (
+            <Text style={s.senderName}>{msg.profiles.display_name}</Text>
+          )}
+          <Text style={[s.content, isMe && s.contentMe]}>{msg.content}</Text>
+          <Text style={[s.time, isMe && s.timeMe]}>{time}</Text>
+        </View>
+      </Pressable>
     </View>
   )
 }
@@ -82,7 +102,8 @@ function makeBubbleStyles(t: Theme) {
     avatar:         { width: 32, height: 32, borderRadius: 16 },
     avatarFallback: { backgroundColor: t.primary, alignItems: 'center', justifyContent: 'center' },
     avatarInitial:  { color: '#fff', fontSize: 13, fontWeight: '700' },
-    bubble:         { maxWidth: '75%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, paddingBottom: 6 },
+    bubbleWrapper:  { maxWidth: '80%' },
+    bubble:         { borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, paddingBottom: 6 },
     bubbleThem:     { backgroundColor: t.surface, borderBottomLeftRadius: 4 },
     bubbleMe:       { backgroundColor: t.primary, borderBottomRightRadius: 4 },
     senderName:     { fontSize: 11, fontWeight: '700', color: t.textTertiary, marginBottom: 2 },
@@ -202,6 +223,28 @@ export default function GroupChatScreen() {
     }
   }, [text, sending, groupId, user, profile])
 
+  // ── Reportar mensaje ──────────────────────────────────────────────────────
+  const handleReportMessage = useCallback((msg: MessageWithProfile) => {
+    Alert.alert(
+      'Reportar mensaje',
+      `Selecciona el motivo del reporte contra ${msg.profiles.display_name}`,
+      [
+        ...REPORT_REASONS.map((reason) => ({
+          text: reason,
+          onPress: async () => {
+            try {
+              await reportUser(groupId, msg.user_id, reason);
+              Alert.alert('Reporte enviado', 'Tu reporte ha sido registrado.');
+            } catch (e) {
+              Alert.alert('Error', parseModerationError((e as Error).message));
+            }
+          },
+        })),
+        { text: 'Cancelar', style: 'cancel' as const },
+      ],
+    );
+  }, [groupId])
+
   // ── Typing indicator ───────────────────────────────────────────────────────
   const handleTextChange = useCallback((val: string) => {
     setText(val)
@@ -262,6 +305,7 @@ export default function GroupChatScreen() {
                   isMe={isMe}
                   showAvatar={showAvatar}
                   t={t}
+                  onLongPress={!isMe ? () => handleReportMessage(item) : undefined}
                 />
               )
             }}

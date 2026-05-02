@@ -6,7 +6,7 @@ Guard en `_layout.tsx`: si ya hay sesión → redirige a `/(app)/(tabs)`.
 
 | Archivo | Descripción |
 |---------|-------------|
-| `onboarding.tsx` | Primera pantalla (splash + CTA entrar/registrarse) |
+| `onboarding.tsx` | Primera pantalla — logo `logoEventSquad.jpg` 130×130px centrado, subtítulo "Vive la música con tu gente", 3 feature cards con iconos FontAwesome en contenedores de color (music/indigo, users/azul, map-marker/rojo), CTAs "Crear cuenta" y "Ya tengo cuenta" |
 | `login.tsx` | Email/contraseña + magic link. Diseño con iconos FontAwesome inline en inputs, toggle show/hide password. |
 | `register.tsx` | Registro con email y contraseña |
 | `profile-setup.tsx` | Nombre y avatar tras el registro (header visible, sin botón atrás) |

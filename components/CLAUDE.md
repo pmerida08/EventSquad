@@ -23,7 +23,9 @@ Tarjeta de grupo en la pantalla de grupos por evento. Muestra nombre, descripci�
 Stack horizontal de avatares de miembros. Máximo N visibles + contador "+X más".
 
 ### `VotingCard.tsx`
-Tarjeta de propuesta de punto de encuentro (Fase 5, pendiente uso).
+Tarjeta de propuesta de punto de encuentro. Props: `proposal: ProposalWithVotes`, `totalMembers`, `hasVoted`, `onVote`.
+- Barra de progreso de votos, fecha formateada, badge "Punto de encuentro elegido" si `proposal.selected`.
+- Botón "Votar" visible solo si `!hasVoted && !proposal.selected`.
 
 ## components/ui/
 Componentes base del template Expo (pueden ignorarse salvo `Themed.tsx`).

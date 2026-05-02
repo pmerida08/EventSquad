@@ -30,10 +30,19 @@ import { supabase } from '@/lib/supabase'
 | `fetchGroupMembers(groupId)` | Miembros con join a `profiles` |
 | `fetchMyGroups()` | Grupos del usuario actual con datos del evento asociado |
 | `getMyGroupForEvent(eventId)` | ID del grupo al que pertenece el usuario en ese evento |
-| `joinGroup(groupId)` | RPC `join_group` (SECURITY DEFINER) |
+| `joinGroup(groupId)` | RPC `join_group` (SECURITY DEFINER) — no requiere identidad verificada |
 | `leaveGroup(groupId)` | Delete de `group_members` |
+| `deleteGroup(groupId)` | Delete de `groups` (CASCADE a miembros, mensajes, propuestas) |
 | `createGroup(eventId, name, description, maxMembers)` | RPC `create_group` (SECURITY DEFINER) |
-| `parseGroupError(e)` | Traduce errores de Postgres a mensajes legibles |
+| `parseGroupError(e)` | Traduce errores de `join_group`: ALREADY_IN_GROUP, GROUP_FULL, NOT_FOUND |
+
+### `moderation.ts`
+| Export | Descripción |
+|--------|-------------|
+| `reportUser(groupId, reportedId, reason)` | RPC `report_user` — guarda reporte; un reporte por reporter+reported+grupo (upsert) |
+| `voteKickUser(groupId, targetId)` | RPC `vote_kick_user` — voto democrático; expulsa si >50% de miembros no-target votan |
+| `kickMember(groupId, targetId)` | RPC `kick_member` — expulsión directa (solo owner) |
+| `parseModerationError(msg)` | Traduce errores de los RPCs: NOT_MEMBER, SELF_REPORT, CANNOT_KICK_OWNER, NOT_OWNER, etc. |
 
 ### `messages.ts`
 | Export | Descripción |
@@ -44,8 +53,23 @@ import { supabase } from '@/lib/supabase'
 | `subscribeToTyping(groupId, myUserId, onTypingChange)` | Presence channel → devuelve `{ startTyping, stopTyping, unsubscribe }` |
 | `MessageWithProfile` | `MessageRow & { profiles: { display_name, avatar_url } }` |
 
+### `voting.ts`
+| Export | Descripción |
+|--------|-------------|
+| `fetchProposals(groupId)` | Propuestas con conteo de votos + `myVotedProposalId` (null si no votó) |
+| `addProposal(groupId, locationName, lat, lng, proposedTime)` | RPC `add_meetup_proposal` (solo miembros) |
+| `voteForProposal(proposalId)` | RPC `vote_for_proposal` — 1 voto por usuario por grupo; selecciona ganador automáticamente |
+| `parseVotingError(msg)` | Traduce errores de los RPCs a mensajes legibles |
+| `subscribeToVoting(groupId, onUpdate)` | Realtime `*` en `meetup_proposals` + `meetup_votes` → devuelve unsubscribe fn |
+| `ProposalWithVotes` | Tipo de la vista `meetup_proposals_with_votes` + `vote_count` |
+
 ### `auth.ts`
 Funciones de auth: `signIn`, `signUp`, `signOut`, `updateProfile`, `uploadAvatar`.
 
 ### `notifications.ts`
-Funciones de push (pendiente Fase 6): registro de `expo_push_token` en `profiles`.
+| Export | Descripción |
+|--------|-------------|
+| `registerForPushNotifications()` | Solicita permisos, obtiene y devuelve el Expo push token (`string \| null`) |
+| `savePushTokenToProfile(userId, token)` | Guarda el token en `profiles.expo_push_token` |
+
+Configura `setNotificationHandler` globalmente al importar. El envío de notificaciones via Edge Function `send-push-notification` está pendiente (Fase 6).

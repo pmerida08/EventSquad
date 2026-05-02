@@ -18,12 +18,19 @@ supabase gen types typescript --project-id eixsagtnwwxsylaoyqfp > types/database
 - `Database['public']['Tables']['groups']['Row']`
 - `Database['public']['Tables']['group_members']['Row']`
 - `Database['public']['Tables']['messages']['Row']`
+- `Database['public']['Tables']['meetup_proposals']['Row']`
+- `Database['public']['Tables']['meetup_votes']['Row']`
+- `Database['public']['Tables']['user_reports']['Row']`
+- `Database['public']['Tables']['kick_votes']['Row']`
 
 ### Vistas
 - `Database['public']['Views']['groups_with_member_count']['Row']`
+- `Database['public']['Views']['meetup_proposals_with_votes']['Row']`
 
 ### Funciones RPC
 - `Database['public']['Functions']['events_near']['Returns'][number]` → tipo `EventNear`
+- `report_user`, `vote_kick_user`, `kick_member` — moderación
+- `add_meetup_proposal`, `vote_for_proposal` — votación punto de encuentro
 
 ### Uso en lib/
 ```ts

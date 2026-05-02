@@ -1,3 +1,4 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -21,11 +22,25 @@ import {
   getMyGroupForEvent,
   joinGroup,
   leaveGroup,
+  deleteGroup,
   parseGroupError,
   type GroupRow,
   type MemberWithProfile,
 } from '@/lib/groups';
+import {
+  reportUser,
+  voteKickUser,
+  kickMember,
+  parseModerationError,
+} from '@/lib/moderation';
 import { useAuthStore } from '@/stores/authStore';
+
+const REPORT_REASONS = [
+  'Comportamiento inapropiado',
+  'Spam o publicidad',
+  'Acoso o insultos',
+  'Otro',
+];
 
 export default function GroupDetailScreen() {
   const t = useTheme();
@@ -103,6 +118,146 @@ export default function GroupDetailScreen() {
     );
   }
 
+  async function handleDelete() {
+    if (!id) return;
+    Alert.alert(
+      'Eliminar grupo',
+      '¿Seguro? Se eliminarán el chat y todas las propuestas de encuentro. Esta acción no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            setAL(true);
+            try {
+              await deleteGroup(id);
+              router.back();
+            } catch (e) {
+              Alert.alert('Error', (e as Error).message);
+            } finally {
+              setAL(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  function handleMemberAction(member: MemberWithProfile) {
+    if (!id || member.user_id === userId) return;
+
+    const isCurrentUserOwner = members.some((m) => m.user_id === userId && m.role === 'owner');
+    const targetName = member.profiles.display_name;
+
+    if (isCurrentUserOwner) {
+      // El owner puede echar directamente o reportar
+      Alert.alert(targetName, '¿Qué quieres hacer con este miembro?', [
+        {
+          text: 'Echar del grupo',
+          style: 'destructive',
+          onPress: () => confirmKick(member),
+        },
+        {
+          text: 'Reportar',
+          onPress: () => showReportOptions(member),
+        },
+        { text: 'Cancelar', style: 'cancel' },
+      ]);
+    } else {
+      // Miembro regular: reportar o votar para echar
+      Alert.alert(targetName, '¿Qué quieres hacer?', [
+        {
+          text: 'Reportar comportamiento',
+          onPress: () => showReportOptions(member),
+        },
+        {
+          text: 'Votar para echar',
+          style: 'destructive',
+          onPress: () => confirmVoteKick(member),
+        },
+        { text: 'Cancelar', style: 'cancel' },
+      ]);
+    }
+  }
+
+  function confirmKick(member: MemberWithProfile) {
+    if (!id) return;
+    Alert.alert(
+      'Echar miembro',
+      `¿Echar a ${member.profiles.display_name} del grupo? Esta acción no se puede deshacer.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Echar',
+          style: 'destructive',
+          onPress: async () => {
+            setAL(true);
+            try {
+              await kickMember(id, member.user_id);
+              await load();
+            } catch (e) {
+              Alert.alert('Error', parseModerationError((e as Error).message));
+            } finally {
+              setAL(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  function showReportOptions(member: MemberWithProfile) {
+    if (!id) return;
+    Alert.alert(
+      'Reportar usuario',
+      `Selecciona el motivo del reporte contra ${member.profiles.display_name}`,
+      [
+        ...REPORT_REASONS.map((reason) => ({
+          text: reason,
+          onPress: async () => {
+            try {
+              await reportUser(id, member.user_id, reason);
+              Alert.alert('Reporte enviado', 'Tu reporte ha sido registrado. El equipo lo revisará.');
+            } catch (e) {
+              Alert.alert('Error', parseModerationError((e as Error).message));
+            }
+          },
+        })),
+        { text: 'Cancelar', style: 'cancel' as const },
+      ],
+    );
+  }
+
+  function confirmVoteKick(member: MemberWithProfile) {
+    if (!id) return;
+    const nonTargetCount = members.filter((m) => m.user_id !== member.user_id).length;
+    const needed = Math.floor(nonTargetCount / 2) + 1;
+    Alert.alert(
+      'Votar para echar',
+      `¿Votar para expulsar a ${member.profiles.display_name}? Se necesitan más de la mitad de los miembros (${needed} de ${nonTargetCount}) para expulsarle.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Votar',
+          style: 'destructive',
+          onPress: async () => {
+            setAL(true);
+            try {
+              await voteKickUser(id, member.user_id);
+              await load();
+              Alert.alert('Voto registrado', 'Tu voto ha sido contabilizado. Si la mayoría vota, el miembro será expulsado.');
+            } catch (e) {
+              Alert.alert('Error', parseModerationError((e as Error).message));
+            } finally {
+              setAL(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={s.center} edges={['top', 'bottom']}>
@@ -117,7 +272,7 @@ export default function GroupDetailScreen() {
       <SafeAreaView style={s.center} edges={['top', 'bottom']}>
         <StatusBar style={t.statusBar} />
         <Text style={s.errorText}>{error ?? 'Grupo no encontrado'}</Text>
-        <Pressable onPress={() => router.back()} style={s.backBtn}>
+        <Pressable onPress={() => router.back()} style={s.backBtn} accessibilityRole="button">
           <Text style={s.backBtnText}>← Volver</Text>
         </Pressable>
       </SafeAreaView>
@@ -134,8 +289,8 @@ export default function GroupDetailScreen() {
       <StatusBar style={t.statusBar} />
 
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.backBtn2} hitSlop={8}>
-          <Text style={s.backText}>←</Text>
+        <Pressable onPress={() => router.back()} style={s.backBtn2} hitSlop={8} accessibilityRole="button">
+          <FontAwesome name="arrow-left" size={16} color={t.text} />
         </Pressable>
         <Text style={s.headerTitle} numberOfLines={1}>{group.name}</Text>
         <View style={{ width: 36 }} />
@@ -182,19 +337,36 @@ export default function GroupDetailScreen() {
             <>
               <MemberAvatars members={members.map((m) => m.profiles)} maxVisible={6} size={44} />
               <View style={s.memberList}>
-                {members.map((m) => (
-                  <View key={m.user_id} style={s.memberRow}>
-                    <View style={s.memberInfo}>
-                      <Text style={s.memberName}>{m.profiles.display_name}</Text>
-                      {m.profiles.verified && <Text style={s.verified}>✓ verificado</Text>}
+                {members.map((m) => {
+                  const isMe = m.user_id === userId;
+                  return (
+                    <View key={m.user_id} style={s.memberRow}>
+                      <View style={s.memberInfo}>
+                        <Text style={s.memberName}>{m.profiles.display_name}</Text>
+                        {m.profiles.verified && <Text style={s.verified}>✓ verificado</Text>}
+                      </View>
+                      <View style={s.memberRight}>
+                        <View style={[s.roleBadge, m.role === 'owner' && s.roleBadgeOwner]}>
+                          <Text style={[s.roleText, m.role === 'owner' && s.roleTextOwner]}>
+                            {m.role === 'owner' ? 'Creador' : 'Miembro'}
+                          </Text>
+                        </View>
+                        {/* Acciones de moderación — solo para otros usuarios y si soy miembro */}
+                        {isMember && !isMe && (
+                          <Pressable
+                            style={s.memberActionBtn}
+                            onPress={() => handleMemberAction(m)}
+                            hitSlop={8}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Acciones para ${m.profiles.display_name}`}
+                          >
+                            <FontAwesome name="ellipsis-v" size={14} color={t.textTertiary} />
+                          </Pressable>
+                        )}
+                      </View>
                     </View>
-                    <View style={[s.roleBadge, m.role === 'owner' && s.roleBadgeOwner]}>
-                      <Text style={[s.roleText, m.role === 'owner' && s.roleTextOwner]}>
-                        {m.role === 'owner' ? 'Creador' : 'Miembro'}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             </>
           ) : (
@@ -205,18 +377,43 @@ export default function GroupDetailScreen() {
         {/* Acciones */}
         {isMember ? (
           <View style={s.actionsSection}>
-            <Pressable style={s.actionBtn} onPress={() => router.push(`/(app)/group/${id}/chat` as never)}>
-              <Text style={s.actionBtnIcon}>💬</Text>
+            <Pressable
+              style={s.actionBtn}
+              onPress={() => router.push(`/(app)/group/${id}/chat` as never)}
+              accessibilityRole="button"
+            >
+              <FontAwesome name="comments" size={20} color={t.primary} style={s.actionBtnIcon} />
               <Text style={s.actionBtnText}>Chat del grupo</Text>
-              <Text style={s.actionBtnArrow}>→</Text>
+              <FontAwesome name="chevron-right" size={13} color={t.textTertiary} />
             </Pressable>
-            <Pressable style={s.actionBtn} onPress={() => router.push(`/(app)/group/${id}/voting` as never)}>
-              <Text style={s.actionBtnIcon}>📍</Text>
+            <Pressable
+              style={s.actionBtn}
+              onPress={() => router.push(`/(app)/group/${id}/voting` as never)}
+              accessibilityRole="button"
+            >
+              <FontAwesome name="map-marker" size={20} color={t.primary} style={s.actionBtnIcon} />
               <Text style={s.actionBtnText}>Punto de encuentro</Text>
-              <Text style={s.actionBtnArrow}>→</Text>
+              <FontAwesome name="chevron-right" size={13} color={t.textTertiary} />
             </Pressable>
-            {!isOwner && (
-              <Pressable style={[s.leaveBtn, actionLoading && s.btnDisabled]} onPress={handleLeave} disabled={actionLoading}>
+            {isOwner ? (
+              <Pressable
+                style={[s.leaveBtn, actionLoading && s.btnDisabled]}
+                onPress={handleDelete}
+                disabled={actionLoading}
+                accessibilityRole="button"
+              >
+                {actionLoading
+                  ? <ActivityIndicator color={t.red} size="small" />
+                  : <Text style={s.leaveBtnText}>Eliminar grupo</Text>
+                }
+              </Pressable>
+            ) : (
+              <Pressable
+                style={[s.leaveBtn, actionLoading && s.btnDisabled]}
+                onPress={handleLeave}
+                disabled={actionLoading}
+                accessibilityRole="button"
+              >
                 {actionLoading
                   ? <ActivityIndicator color={t.red} size="small" />
                   : <Text style={s.leaveBtnText}>Salir del grupo</Text>
@@ -235,7 +432,12 @@ export default function GroupDetailScreen() {
                 <Text style={s.infoBoxText}>Este grupo ya está completo.</Text>
               </View>
             ) : (
-              <Pressable style={[s.joinBtn, actionLoading && s.btnDisabled]} onPress={handleJoin} disabled={actionLoading}>
+              <Pressable
+                style={[s.joinBtn, actionLoading && s.btnDisabled]}
+                onPress={handleJoin}
+                disabled={actionLoading}
+                accessibilityRole="button"
+              >
                 {actionLoading
                   ? <ActivityIndicator color="#fff" />
                   : <Text style={s.joinBtnText}>Unirse al grupo →</Text>
@@ -255,7 +457,6 @@ function makeStyles(t: Theme) {
     center:       { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
     header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: t.surface, borderBottomWidth: 1, borderBottomColor: t.borderLight },
     backBtn2:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-    backText:     { fontSize: 22, color: t.text },
     headerTitle:  { flex: 1, fontSize: 17, fontWeight: '700', color: t.text, textAlign: 'center' },
     body:         { padding: 16, gap: 0 },
     card:         { backgroundColor: t.surface, borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
@@ -275,15 +476,16 @@ function makeStyles(t: Theme) {
     memberInfo:   { flex: 1 },
     memberName:   { fontSize: 14, fontWeight: '600', color: t.text },
     verified:     { fontSize: 11, color: t.green, marginTop: 2, fontWeight: '500' },
+    memberRight:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
     roleBadge:      { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3, backgroundColor: t.surface2 },
     roleBadgeOwner: { backgroundColor: t.primaryBg },
     roleText:       { fontSize: 11, color: t.textSecondary, fontWeight: '600' },
     roleTextOwner:  { color: t.primary },
+    memberActionBtn:{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
     actionsSection: { gap: 10, marginBottom: 32 },
     actionBtn:    { flexDirection: 'row', alignItems: 'center', backgroundColor: t.surface, borderRadius: 14, padding: 16, gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
-    actionBtnIcon: { fontSize: 22 },
+    actionBtnIcon: { width: 24, textAlign: 'center' },
     actionBtnText: { flex: 1, fontSize: 15, fontWeight: '600', color: t.text },
-    actionBtnArrow:{ fontSize: 16, color: t.textTertiary },
     joinBtn:      { backgroundColor: t.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 4 },
     joinBtnText:  { color: '#fff', fontWeight: '700', fontSize: 16 },
     leaveBtn:     { borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1.5, borderColor: t.red, marginTop: 4 },

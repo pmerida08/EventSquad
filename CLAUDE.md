@@ -66,11 +66,12 @@ Vistas: `groups_with_member_count`
 | Fase | Estado | Descripción |
 |------|--------|-------------|
 | 1 | ✅ | Auth (registro, login, perfil, verificación identidad) |
-| 2 | ✅ | Mapa de eventos (Ticketmaster sync, geolocalización, dedup) |
+| 2 | ✅ | Eventos (Ticketmaster sync, geolocalización, dedup UNIQUE(name,venue)) |
 | 3 | ✅ | Grupos (crear, unirse, detalle, miembros) |
-| 4 | ✅ | Chat de grupo (Realtime, typing indicator Presence, optimistic UI) |
+| 4 | ✅ | Chat de grupo (Realtime, typing indicator Presence, optimistic UI, paginación) |
 | 5 | 🔜 | Sistema de votación (punto de encuentro, meetup_proposals/votes) |
-| 6 | 🔜 | Notificaciones push (expo-notifications + Firebase + Edge Function) |
+| 6 | 🔜 | Notificaciones push (expo-notifications + Expo Push API + Edge Function) |
+| 7 | 🔜 | Pulido, testing E2E, liveness check real, OTA updates, publicación stores |
 
 ## Convenciones de código
 - **Tema**: siempre `const t = useTheme()` + `makeStyles(t)`. Nunca colores hardcodeados.
@@ -89,10 +90,16 @@ npm run test:coverage # coverage report
 ```
 Mocks en `__tests__/utils/supabase.mock.ts`. Setup en `jest.setup.ts`.
 
+## Assets
+- `assets/images/logoEventSquad.jpg` — Logo oficial: pin de ubicación con nota musical, color indigo `#6366F1`, 1024×1024px
+- `assets/images/icon.png` / `adaptive-icon.png` / `splash-icon.png` — Todos usan el mismo logo
+
 ## Comandos útiles
 ```bash
-npx expo start              # dev server
+npx expo start              # dev server (requiere dev client instalado)
 npx expo start --tunnel     # con túnel (red distinta)
-eas build -p android --profile preview   # APK de prueba
+npx expo start --dev-client # fuerza dev client (no Expo Go)
+eas build -p android --profile preview      # APK distribución interna
 eas build -p android --profile development  # dev client APK
+eas build -p android --profile production   # AAB para Play Store
 ```
