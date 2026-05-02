@@ -1,7 +1,7 @@
 import { FlashList } from '@shopify/flash-list';
 import { StatusBar } from 'expo-status-bar';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -42,9 +42,12 @@ export default function EventGroupsScreen() {
     }
   }, [eventId]);
 
-  useEffect(() => {
-    load().finally(() => setLoading(false));
-  }, [load]);
+  // Recarga cada vez que la pantalla recupera el foco (ej: volver tras eliminar un grupo)
+  useFocusEffect(
+    useCallback(() => {
+      load().finally(() => setLoading(false));
+    }, [load]),
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -86,7 +89,7 @@ export default function EventGroupsScreen() {
             <GroupCard
               group={item}
               myGroupId={myGroupId}
-              onPress={() => router.push(`/(app)/group/${item.id}/index` as never)}
+              onPress={() => router.push(`/(app)/group/${item.id}` as never)}
             />
           )}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}

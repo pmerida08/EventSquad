@@ -30,9 +30,9 @@ router.push(`/(app)/group/${id}/index`)
 Ver `app/(app)/(tabs)/CLAUDE.md`
 
 ## group/[id]/
-- `index.tsx` — Detalle: nombre, descripción, lista de miembros (`MemberAvatars`), botones unirse/salir/ir al chat.
-- `chat.tsx` — Chat completo: `FlatList` invertida, burbujas con avatar, inserción optimista, paginación con cursor, typing indicator.
-- `voting.tsx` — Votación de punto de encuentro (Fase 5, pendiente).
+- `index.tsx` — Detalle: nombre, descripción, lista de miembros (`MemberAvatars`), botones unirse/salir/ir al chat. Cada miembro ajeno al usuario muestra botón "···" con acciones de moderación: owner puede echar directamente (`kickMember`); miembros regulares pueden reportar (`reportUser`) o votar para echar (`voteKickUser`).
+- `chat.tsx` — Chat completo: `FlatList` invertida, burbujas con avatar, inserción optimista, paginación con cursor, typing indicator. Long-press en mensajes ajenos abre selector de motivo para reportar al usuario via `reportUser`.
+- `voting.tsx` — Votación de punto de encuentro. Lista de propuestas con `VotingCard`, banner ganador, modal para añadir propuesta (lugar + fecha + hora). Realtime via `subscribeToVoting`. Coords para propuestas desde `locationStore`.
 
 ## event/[id].tsx
 Detalle de un evento: imagen, categoría, fecha, recinto, mapa (pendiente PostGIS), botón "Ver grupos".

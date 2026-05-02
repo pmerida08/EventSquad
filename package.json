@@ -18,7 +18,9 @@
   },
   "jest": {
     "preset": "jest-expo",
-    "setupFiles": ["./jest.setup.ts"],
+    "setupFiles": [
+      "./jest.setup.ts"
+    ],
     "testMatch": [
       "**/__tests__/**/*.test.{ts,tsx}",
       "**/*.test.{ts,tsx}"
@@ -39,6 +41,7 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^3.0.2",
+    "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/native": "^7.1.8",
     "@shopify/flash-list": "^2.3.1",
     "@supabase/supabase-js": "^2.105.0",

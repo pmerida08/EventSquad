@@ -8,16 +8,17 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 
 | Capa | Tecnología |
 |------|-----------|
-| Frontend | React Native + Expo (SDK 52+) |
+| Frontend | React Native + Expo SDK 54 |
 | Backend / DB | Supabase (Postgres, Auth, Storage, Realtime, Edge Functions) |
-| Navegación | Expo Router (file-based) |
+| Navegación | Expo Router v6 (file-based routing) |
 | Estado global | Zustand |
-| Estilos | NativeWind (Tailwind para RN) |
-| Chat en tiempo real | Supabase Realtime (subscriptions) |
-| Push notifications | Expo Notifications + Supabase Edge Function |
-| Web scraping de eventos | Supabase Edge Function (Deno + cheerio) |
-| Verificación de identidad | Face Liveness (AWS Rekognition o similar) |
-| Mapas / Geolocalización | expo-location + react-native-maps |
+| Estilos | StyleSheet con sistema de tema claro/oscuro (`constants/theme.ts`) |
+| Chat en tiempo real | Supabase Realtime (subscriptions + Presence) |
+| Push notifications | Expo Notifications + Supabase Edge Function *(Fase 6 pendiente)* |
+| Fuente de eventos | Ticketmaster API (Edge Function `sync-ticketmaster`) |
+| Verificación de identidad | Selfie MVP (liveness real con Veriff/AWS pendiente Fase 7) |
+| Geolocalización | expo-location |
+| Iconos | @expo/vector-icons/FontAwesome |
 
 ---
 
@@ -26,8 +27,8 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 - [x] Inicializar proyecto con `npx create-expo-app eventsquad --template tabs`
 - [x] Configurar Expo Router con rutas: `(auth)`, `(app)/(tabs)`, `(app)/event/[id]`, `(app)/group/[id]`
 - [x] Crear proyecto en Supabase y guardar variables de entorno
-- [x] Configurar `supabase-js` client con singleton (`lib/supabase.ts`) — usa SecureStore con chunking en lugar de AsyncStorage (compatibilidad nueva arquitectura + Expo Go)
-- [ ] Configurar EAS Build para iOS y Android
+- [x] Configurar `supabase-js` client con singleton (`lib/supabase.ts`) — usa SecureStore con chunking en lugar de AsyncStorage (compatibilidad nueva arquitectura)
+- [x] Configurar EAS Build con 3 perfiles: `development` (APK + dev client), `preview` (APK distribución interna), `production` (AAB Play Store)
 - [x] Configurar ESLint + Prettier + TypeScript estricto
 - [x] Instalar dependencias base:
   - `@supabase/supabase-js`
@@ -35,15 +36,13 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
   - `expo-notifications`
   - `expo-image-picker`
   - `expo-camera`
-  - `react-native-maps`
   - `zustand`
-  - `nativewind` — instalado pero pendiente de configurar
-  - `react-native-gifted-chat`
   - `date-fns`
+  - `expo-image`
 
 ---
 
-## Fase 1 — Autenticación y perfil de usuario
+## Fase 1 — Autenticación y perfil de usuario ✅
 
 ### Base de datos (Supabase)
 - [x] Tabla `profiles` con: `id` (uuid, FK auth.users), `display_name`, `avatar_url`, `bio`, `verified`, `expo_push_token`, `created_at`
@@ -53,9 +52,9 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 - [x] Tipos TypeScript generados desde Supabase MCP → `types/database.types.ts`
 
 ### Pantallas
-- [x] Pantalla de onboarding (`app/(auth)/onboarding.tsx`) — logo, 3 cards de features, CTAs
-- [x] Pantalla de registro con email/contraseña o magic link (`app/(auth)/register.tsx`)
-- [x] Pantalla de login (`app/(auth)/login.tsx`) — email+contraseña + magic link
+- [x] Pantalla de onboarding (`app/(auth)/onboarding.tsx`) — logo 130×130px, subtítulo, 3 feature cards con iconos FontAwesome en contenedores de color, CTAs "Crear cuenta" / "Ya tengo cuenta"
+- [x] Pantalla de registro con email/contraseña (`app/(auth)/register.tsx`)
+- [x] Pantalla de login (`app/(auth)/login.tsx`) — email+contraseña + magic link, iconos en inputs, show/hide password
 - [x] Pantalla de configuración de perfil (`app/(auth)/profile-setup.tsx`) — nombre, bio, foto
 - [x] Flujo de subida de foto de perfil con `expo-image-picker` (`lib/auth.ts → pickAndUploadAvatar`)
 - [x] Tab de perfil con datos reales (`app/(app)/(tabs)/profile.tsx`)
@@ -75,66 +74,73 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 
 ---
 
-## Fase 2 — Permisos de ubicación y descubrimiento de eventos
+## Fase 2 — Permisos de ubicación y descubrimiento de eventos ✅
 
 ### Geolocalización
-- [ ] Solicitar permiso de ubicación al iniciar la app (`expo-location`)
-- [ ] Guardar coordenadas en memoria (Zustand store — `stores/locationStore.ts` ya existe como placeholder)
-- [ ] Pantalla de mapa con `react-native-maps` centrado en la ubicación del usuario
+- [x] Solicitar permiso de ubicación al iniciar la app (`expo-location`) — `hooks/useLocation.ts`
+- [x] Guardar coordenadas en memoria (Zustand store — `stores/locationStore.ts`)
+- [x] Fallback en emulador: Madrid `{ latitude: 40.4168, longitude: -3.7038 }`
+- [ ] Pantalla de mapa con `react-native-maps` centrado en ubicación del usuario *(pendiente, vista lista implementada)*
 
-### Web scraping / Fuente de eventos
-- [ ] Supabase Edge Function `scrape-events`:
-  - Recibe `lat`, `lng`, `radius_km`
-  - Fuente a decidir: Ticketmaster API (oficial), Eventbrite API, o scraping con cheerio
-  - Devuelve lista de eventos: `{ id, name, date, venue, address, lat, lng, image_url, category }`
-- [ ] Tabla `events` para cachear resultados con TTL de 1h
-- [ ] Migración SQL: tabla `events` + RLS (lectura pública, escritura solo service_role)
-- [ ] Pantalla de listado de eventos próximos con filtros por categoría
-- [ ] Pantalla de detalle de evento: foto, fecha, lugar, mapa, grupos activos (`app/(app)/event/[id].tsx` — placeholder existente)
+### Fuente de eventos (Ticketmaster API)
+- [x] Supabase Edge Function `sync-ticketmaster` (Deno):
+  - Cron diario via `pg_net` HTTP POST
+  - Recoge hasta 5 páginas × 200 eventos (`countryCode=ES, classificationName=Music`)
+  - Deduplica en memoria por `(name, venue)`, conserva fecha más próxima al futuro, descarta VIP/UPGRADE
+  - Upsert en batches de 200 con `onConflict: 'name,venue'`
+- [x] Tabla `events` con 227 registros únicos (`UNIQUE(name, venue)`)
+- [x] Cron `cleanup-old-events` — DELETE eventos pasados hace >3 días (02:00 UTC)
+- [x] Migración `events_near` v2 — DISTINCT ON (name,venue), cutoff 2h, filtro VIP/UPGRADE
+- [x] Pantalla de listado de eventos con filtros por categoría (`app/(app)/(tabs)/index.tsx`)
+  - `coordsRef` pattern para evitar re-fetches automáticos al llegar la ubicación
+  - 5 chips de categoría + búsqueda client-side
+  - Skeletons durante carga
+- [x] Pantalla de detalle de evento (`app/(app)/event/[id].tsx`) — imagen, categoría, fecha, recinto, botón "Ver grupos"
 
 ---
 
-## Fase 3 — Grupos de evento
+## Fase 3 — Grupos de evento ✅
 
 ### Base de datos (Supabase)
-- [ ] Tabla `groups`:
-  - `id`, `event_id` (FK events), `name`, `description`, `max_members` (default 10), `created_by` (FK profiles), `created_at`
-- [ ] Tabla `group_members`:
-  - `group_id`, `user_id`, `role` (owner | member), `joined_at`
-- [ ] RLS: solo miembros del grupo pueden leer mensajes y datos del grupo
-- [ ] Función Postgres `join_group(group_id)` que verifica que el grupo no esté lleno y que el usuario esté verificado
+- [x] Tabla `groups`: `id`, `event_id`, `name`, `description`, `max_members` (2-50, default 10), `created_by`, `created_at`
+- [x] Tabla `group_members`: `(group_id, user_id)` PK, `role` (owner|member), `joined_at`
+- [x] Vista `groups_with_member_count` (security_invoker=true)
+- [x] RPC `create_group` (SECURITY DEFINER): valida 1 grupo por evento por usuario
+- [x] RPC `join_group` (SECURITY DEFINER): valida max_members y unicidad por evento
 
 ### Pantallas
-- [ ] Lista de grupos disponibles para un evento (con número de miembros y foto de cada integrante)
-- [ ] Pantalla "Crear grupo": nombre, descripción, tamaño máximo
-- [ ] Pantalla de detalle de grupo: avatares de miembros, descripción, botón "Unirse"
-- [ ] Confirmación al unirse a un grupo (mostrar los miembros actuales)
-- [ ] Lógica para que un usuario solo pueda estar en un grupo por evento
+- [x] Lista de grupos para un evento (`app/(app)/event-groups/[eventId].tsx`) — con conteo de miembros y barra de progreso
+- [x] Pantalla "Crear grupo" (`app/(app)/create-group.tsx`) — nombre, descripción, tamaño máximo
+- [x] Pantalla de detalle de grupo (`app/(app)/group/[id]/index.tsx`) — miembros con `MemberAvatars`, botones unirse/salir/ir al chat
+- [x] Lógica para que un usuario solo pueda estar en un grupo por evento (RPC + guard en UI)
 
 ---
 
-## Fase 4 — Chat de grupo
+## Fase 4 — Chat de grupo ✅
 
 ### Base de datos (Supabase)
-- [ ] Tabla `messages`:
-  - `id`, `group_id` (FK groups), `user_id` (FK profiles), `content`, `created_at`
-- [ ] RLS: solo miembros del grupo pueden leer/escribir mensajes
-- [ ] Índice en `(group_id, created_at)` para queries paginadas
+- [x] Tabla `messages`: `id`, `group_id`, `user_id`, `content` (1-1000 chars), `created_at`
+- [x] RLS: solo miembros del grupo pueden leer/escribir mensajes
+- [x] Índice en `(group_id, created_at DESC)` para queries paginadas
+- [x] Publicada en `supabase_realtime`
 
 ### Real-time
-- [ ] Suscripción a `messages` con Supabase Realtime por `group_id`
-- [ ] Actualización optimista de la UI al enviar mensajes
-- [ ] Paginación con cursor (cargar mensajes anteriores al hacer scroll)
+- [x] Suscripción a `messages` con Supabase Realtime (INSERT) por `group_id`
+- [x] Actualización optimista de la UI al enviar mensajes
+- [x] Paginación con cursor (cargar mensajes anteriores al hacer scroll — `fetchMessages(groupId, beforeCursor)`)
+- [x] Indicador "escribiendo..." con Supabase Realtime Presence
 
 ### Pantallas
-- [ ] Pantalla de chat con `react-native-gifted-chat` o implementación propia
-  - Burbujas con nombre y avatar de cada usuario
-  - Indicador "escribiendo..." (usando Realtime Presence)
-  - Mostrar foto de perfil de cada integrante en la cabecera del chat
+- [x] Pantalla de chat implementación propia (`app/(app)/group/[id]/chat.tsx`) *(no gifted-chat)*
+  - FlatList invertida con burbujas por usuario
+  - Nombre y avatar de cada usuario (join a `profiles`)
+  - Indicador "X está escribiendo..." (Presence)
+  - Foto de perfil de miembros en la cabecera
+  - Paginación al llegar al top de la lista
 
 ---
 
-## Fase 5 — Sistema de votación para punto de encuentro
+## Fase 5 — Sistema de votación para punto de encuentro 🔜
 
 ### Base de datos (Supabase)
 - [ ] Tabla `meetup_proposals`:
@@ -145,21 +151,20 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 - [ ] Trigger: cuando todos los miembros han votado → marcar propuesta ganadora (`selected: boolean`)
 
 ### Pantallas
-- [ ] Pantalla de votación dentro del chat/grupo:
-  - Lista de propuestas de lugar y hora (cada miembro puede añadir una)
-  - Chips de hora y lugar propuestos
+- [ ] Pantalla de votación dentro del grupo (`app/(app)/group/[id]/voting.tsx`, pantalla existe como placeholder):
+  - Lista de propuestas de lugar y hora
   - Botón de voto en cada propuesta
   - Barra de progreso de votos
   - Resultado final destacado cuando todos han votado
-- [ ] Formulario para añadir propuesta propia: lugar en mapa + selector de hora
+- [ ] Formulario para añadir propuesta: lugar + selector de hora
 
 ---
 
-## Fase 6 — Notificaciones push
+## Fase 6 — Notificaciones push 🔜
 
 ### Configuración
 - [ ] Configurar `expo-notifications` con permisos en iOS y Android
-- [ ] Guardar `expo_push_token` en tabla `profiles` al iniciar sesión
+- [ ] Guardar `expo_push_token` en tabla `profiles` al iniciar sesión (`lib/notifications.ts` existe como placeholder)
 - [ ] Supabase Edge Function `send-push-notification` que llama a la API de Expo
 
 ### Triggers de notificación
@@ -171,75 +176,93 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 
 ---
 
-## Fase 7 — Pulido, testing y despliegue
+## Fase 7 — Pulido, testing y despliegue 🔜
 
 ### Testing
-- [ ] Tests unitarios de lógica de negocio (Jest + Testing Library)
+- [x] Tests unitarios de `lib/events.ts`, `lib/messages.ts`, `constants/theme.ts` (Jest + jest-expo)
+- [x] Tests de componentes `EventCard`, `EventCardSkeleton` (@testing-library/react-native)
 - [ ] Tests de integración de Edge Functions (Deno test)
-- [ ] Tests E2E de flujos críticos con Maestro
+- [ ] Tests E2E de flujos críticos (Maestro / Playwright)
 - [ ] Prueba de RLS policies con `supabase test`
 
 ### Seguridad
-- [ ] Auditoría de RLS policies (ninguna tabla sin policy)
+- [ ] Auditoría completa de RLS policies (ninguna tabla sin policy)
 - [ ] Rate limiting en Edge Functions
-- [ ] Validación de inputs en todos los formularios
+- [ ] Validación exhaustiva de inputs en todos los formularios
 - [ ] Revisar que datos sensibles no se exponen en el cliente
 
 ### Despliegue
-- [ ] Configurar EAS Build con perfiles `development`, `preview`, `production`
-- [ ] App icons y splash screen definitivos
+- [x] Configurar EAS Build con perfiles `development`, `preview`, `production`
+- [x] App icons y splash screen definitivos (pin + nota musical, indigo `#6366F1`)
 - [ ] Configurar OTA updates con EAS Update
 - [ ] Publicar en TestFlight (iOS) y Play Console (Android) para beta testers
+- [ ] Integrar Veriff / AWS Rekognition para liveness check real
 
 ---
 
-## Decisiones pendientes
+## Decisiones resueltas ✅
 
-- [ ] **Nombre de la app**: ¿EventSquad? ¿Juntamos? ¿BuddyUp? Definir branding
-- [ ] **Fuentes de eventos**: Evaluar si usar Eventbrite API, Ticketmaster API, o scraping directo. Las APIs oficiales son más fiables y no violan términos de servicio
-- [ ] **Verificación de identidad**: Elegir entre implementación propia con `expo-face-detector` (gratuito, menos robusto) o servicio externo como Veriff/Onfido (de pago, más fiable)
-- [ ] **Límite de integrantes por grupo**: ¿5? ¿10? ¿Configurable por el creador?
+- [x] **Nombre de la app**: EventSquad — logo pin+nota musical, color indigo `#6366F1`, tagline "Vive la música con tu gente"
+- [x] **Fuentes de eventos**: Ticketmaster API oficial (`countryCode=ES, classificationName=Music`)
+- [x] **Límite de integrantes por grupo**: Configurable por el creador (2–50, default 10)
+- [ ] **Verificación de identidad real**: Pendiente elegir entre Veriff / Onfido / AWS Rekognition (actualmente selfie MVP)
 
 ---
 
-## Estructura de carpetas sugerida
+## Estructura de carpetas actual
 
 ```
 eventsquad/
 ├── app/
+│   ├── _layout.tsx               ← Root: fuentes, auth init, ThemeProvider
 │   ├── (auth)/
+│   │   ├── onboarding.tsx        ← Logo, 3 feature cards, CTAs
 │   │   ├── login.tsx
 │   │   ├── register.tsx
+│   │   ├── profile-setup.tsx
 │   │   └── verify-identity.tsx
-│   ├── (app)/
-│   │   ├── (tabs)/
-│   │   │   ├── index.tsx          # Mapa + lista de eventos
-│   │   │   ├── groups.tsx         # Mis grupos
-│   │   │   └── profile.tsx        # Perfil del usuario
-│   │   ├── event/[id].tsx         # Detalle de evento
-│   │   ├── group/[id]/
-│   │   │   ├── index.tsx          # Detalle de grupo
-│   │   │   ├── chat.tsx           # Chat del grupo
-│   │   │   └── voting.tsx         # Votación punto de encuentro
-│   │   └── _layout.tsx
-│   └── _layout.tsx
+│   └── (app)/
+│       ├── _layout.tsx           ← Stack + useLocationInitializer
+│       ├── (tabs)/
+│       │   ├── index.tsx         ← Eventos (fetchEventsNear / fetchAllEvents)
+│       │   ├── groups.tsx        ← Mis grupos
+│       │   └── profile.tsx       ← Perfil del usuario
+│       ├── event/[id].tsx
+│       ├── event-groups/[eventId].tsx
+│       ├── create-group.tsx
+│       └── group/[id]/
+│           ├── index.tsx         ← Detalle del grupo
+│           ├── chat.tsx          ← Chat (Realtime + Presence)
+│           └── voting.tsx        ← Placeholder (Fase 5)
 ├── components/
-│   ├── ui/                        # Componentes atómicos
+│   ├── ui/                       ← VerifiedBadge y otros atómicos
 │   ├── EventCard.tsx
+│   ├── EventCardSkeleton.tsx
 │   ├── GroupCard.tsx
 │   ├── MemberAvatars.tsx
-│   └── VotingCard.tsx
+│   └── VotingCard.tsx            ← Placeholder (Fase 5)
 ├── lib/
-│   ├── supabase.ts                # Cliente Supabase
-│   └── notifications.ts
+│   ├── supabase.ts               ← Cliente Supabase (SecureStore chunked)
+│   ├── auth.ts
+│   ├── events.ts
+│   ├── groups.ts
+│   ├── messages.ts
+│   └── notifications.ts          ← Placeholder (Fase 6)
 ├── stores/
-│   ├── authStore.ts               # Zustand store de autenticación
-│   └── locationStore.ts           # Zustand store de ubicación
+│   ├── authStore.ts
+│   └── locationStore.ts
+├── hooks/
+│   ├── useAuth.ts
+│   ├── useLocation.ts
+│   └── useColorScheme.ts
+├── constants/
+│   └── theme.ts                  ← Sistema claro/oscuro
 ├── supabase/
-│   ├── migrations/                # SQL migrations
+│   ├── migrations/               ← 8 migraciones aplicadas
 │   └── functions/
-│       ├── scrape-events/
-│       └── send-push-notification/
+│       ├── sync-ticketmaster/    ← Activa (v5, cron diario)
+│       ├── scrape-events/        ← Reservado
+│       └── send-push-notification/ ← Pendiente Fase 6
 └── types/
-    └── database.types.ts          # Tipos generados por Supabase CLI
+    └── database.types.ts         ← Tipos generados por Supabase CLI
 ```

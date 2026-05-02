@@ -14,9 +14,11 @@ Las migraciones están en orden cronológico. Para aplicar nuevas: usar MCP `app
 | `20260428150000_cleanup_cron.sql` | Cron `cleanup-old-events` — DELETE eventos pasados hace >3 días (02:00 UTC) |
 | `20260429100000_messages.sql` | Tabla `messages`, índice, RLS, publicación Realtime |
 | `20260429130000_events_dedup_unique.sql` | **Deduplicación DB**: DROP source_id unique, DELETE duplicados, ADD UNIQUE(name,venue) |
+| `20260502000000_voting.sql` | Tablas `meetup_proposals` + `meetup_votes`, vista `meetup_proposals_with_votes`, RPCs `add_meetup_proposal` + `vote_for_proposal`, RLS, Realtime |
+| `20260502010000_moderation.sql` | Recrea `join_group` sin check UNVERIFIED; tablas `user_reports` + `kick_votes`; RPCs `report_user`, `vote_kick_user`, `kick_member` |
 
 ## Estado actual de la tabla events
-- 227 registros únicos (tras `20260429130000`)
+- 227 registros únicos (tras `20260429130000`) — se actualiza con el cron diario
 - Constraint: `UNIQUE(name, venue)`
 - El Edge Function `sync-ticketmaster` hace upsert con `onConflict: 'name,venue'`
 

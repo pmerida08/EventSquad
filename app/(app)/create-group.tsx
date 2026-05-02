@@ -37,7 +37,7 @@ export default function CreateGroupScreen() {
     setLoading(true);
     try {
       const group = await createGroup(eventId, name.trim(), description.trim(), maxMembers);
-      router.replace(`/(app)/group/${group.id}/index` as never);
+      router.replace(`/(app)/group/${group.id}` as never);
     } catch (e) {
       setError(parseGroupError((e as Error).message));
     } finally {

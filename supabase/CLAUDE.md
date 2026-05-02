@@ -59,12 +59,51 @@ INDEX (group_id, created_at DESC)
 - RLS: solo miembros del grupo pueden leer/escribir
 - Publicada en `supabase_realtime` para cambios en tiempo real
 
+### `meetup_proposals`
+```sql
+id uuid PK   group_id uuid→groups   proposed_by uuid→profiles
+location_name text CHECK(1-200 chars)   lat float8   lng float8
+proposed_time timestamptz   selected boolean DEFAULT false   created_at timestamptz
+```
+- RLS: lectura solo miembros del grupo; escritura via RPC
+- Publicada en `supabase_realtime`
+
+### `meetup_votes`
+```sql
+PK(proposal_id, user_id)   proposal_id uuid→meetup_proposals   user_id uuid→profiles   created_at timestamptz
+```
+- 1 voto por usuario por grupo (enforced en RPC `vote_for_proposal`)
+- RLS: lectura solo miembros del grupo; escritura via RPC
+- Publicada en `supabase_realtime`
+- Vista `meetup_proposals_with_votes` (security_invoker=true): propuestas + COUNT(votes)
+
+### `user_reports`
+```sql
+id uuid PK   group_id uuid→groups   reporter_id uuid→profiles   reported_id uuid→profiles
+reason text CHECK(1-500 chars)   created_at timestamptz
+UNIQUE(group_id, reporter_id, reported_id)
+```
+- RLS: lectura solo miembros del grupo; escritura via RPC `report_user`
+- Upsert: si ya existe un reporte del mismo reporter→reported en el mismo grupo, se actualiza el motivo
+
+### `kick_votes`
+```sql
+PK(group_id, target_id, voter_id)   group_id uuid→groups   target_id uuid→profiles   voter_id uuid→profiles   created_at timestamptz
+```
+- RLS: lectura solo miembros del grupo; escritura via RPC `vote_kick_user`
+- Se limpian automáticamente cuando el target es expulsado
+
 ## RPCs disponibles
 | Función | Auth | Descripción |
 |---------|------|-------------|
 | `events_near(user_lat, user_lng, radius_km, cat)` | anon/authenticated | Eventos con distancia Haversine + DISTINCT ON (name,venue) |
-| `join_group(p_group_id)` | authenticated | Unirse a grupo (SECURITY DEFINER) |
+| `join_group(p_group_id)` | authenticated | Unirse a grupo — valida max_members y unicidad por evento (SECURITY DEFINER) |
 | `create_group(p_event_id, p_name, p_description, p_max_members)` | authenticated | Crear grupo (SECURITY DEFINER) |
+| `add_meetup_proposal(p_group_id, p_location_name, p_lat, p_lng, p_proposed_time)` | authenticated | Añadir propuesta de encuentro (SECURITY DEFINER) |
+| `vote_for_proposal(p_proposal_id)` | authenticated | Votar propuesta; selecciona ganador si todos votaron (SECURITY DEFINER) |
+| `report_user(p_group_id, p_reported_id, p_reason)` | authenticated | Reporta un miembro del grupo (SECURITY DEFINER) |
+| `vote_kick_user(p_group_id, p_target_id)` | authenticated | Vota para expulsar; expulsa automáticamente si >50% votan (SECURITY DEFINER) |
+| `kick_member(p_group_id, p_target_id)` | authenticated | Expulsión directa por el owner (SECURITY DEFINER) |
 
 ## Crons (pg_cron)
 | Job | Schedule | Acción |
