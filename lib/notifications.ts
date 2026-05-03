@@ -33,9 +33,14 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
   if (finalStatus !== 'granted') return null
 
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined
-  const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId })
-  return token
+  try {
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined
+    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId })
+    return token
+  } catch {
+    // FCM no configurado (falta google-services.json o build sin Firebase)
+    return null
+  }
 }
 
 export async function savePushTokenToProfile(userId: string, token: string): Promise<void> {

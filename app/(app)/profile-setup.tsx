@@ -61,7 +61,7 @@ export default function ProfileSetupScreen() {
         avatar_url: avatarUrl,
       });
       setProfile(updated);
-      router.replace('/(auth)/verify-identity');
+      router.back();
     } catch (e) {
       Alert.alert('Error al guardar', (e as Error).message);
     } finally {
@@ -133,11 +133,8 @@ export default function ProfileSetupScreen() {
           <Pressable style={[s.primaryButton, loading && s.buttonDisabled]} onPress={handleSave} disabled={loading}>
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={s.primaryButtonText}>Continuar → Verificar identidad</Text>
+              : <Text style={s.primaryButtonText}>Guardar cambios</Text>
             }
-          </Pressable>
-          <Pressable style={s.skipButton} onPress={() => router.replace('/(app)/(tabs)')}>
-            <Text style={s.skipText}>Ahora no, entrar a la app</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

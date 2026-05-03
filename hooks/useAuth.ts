@@ -14,8 +14,16 @@ export function useAuthInitializer() {
   const setLoading = useAuthStore((s) => s.setLoading);
 
   useEffect(() => {
-    // Recuperar sesión existente (p.ej. token guardado en AsyncStorage)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Recuperar sesión existente. Si el refresh token guardado es inválido
+    // (expirado, revocado o de otra instancia), Supabase lanza AuthApiError;
+    // en ese caso limpiamos el storage y dejamos al usuario sin sesión.
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        supabase.auth.signOut().catch(() => null);
+        setSession(null);
+        setLoading(false);
+        return;
+      }
       setSession(session);
       setLoading(false);
 
@@ -24,6 +32,11 @@ export function useAuthInitializer() {
           .then(setProfile)
           .catch(console.error);
       }
+    }).catch(() => {
+      // Red caída u otro error inesperado: dejar sin sesión
+      supabase.auth.signOut().catch(() => null);
+      setSession(null);
+      setLoading(false);
     });
 
     // Escuchar eventos de auth (login, logout, refresh de token)

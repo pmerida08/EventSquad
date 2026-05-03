@@ -66,16 +66,18 @@ export async function updateProfile(userId: string, updates: Omit<ProfileUpdate,
 }
 
 export async function uploadAvatar(userId: string, imageUri: string): Promise<string> {
-  const ext = imageUri.split('.').pop() ?? 'jpg';
-  const fileName = `${userId}/avatar.${ext}`;
+  const ext = imageUri.split('.').pop()?.split('?')[0]?.toLowerCase() ?? 'jpg';
+  const isPng = ext === 'png';
+  const mimeType = isPng ? 'image/png' : 'image/jpeg';
+  const fileName = `${userId}/avatar.${isPng ? 'png' : 'jpg'}`;
 
-  const response = await fetch(imageUri);
-  const blob = await response.blob();
+  // .blob() no está implementado correctamente en React Native — usar arrayBuffer
+  const arrayBuffer = await fetch(imageUri).then((r) => r.arrayBuffer());
 
   const { error } = await supabase.storage
     .from('avatars')
-    .upload(fileName, blob, {
-      contentType: `image/${ext}`,
+    .upload(fileName, arrayBuffer, {
+      contentType: mimeType,
       upsert: true,
     });
 
@@ -99,10 +101,4 @@ export async function pickAndUploadAvatar(userId: string): Promise<string | null
   if (!asset?.uri) return null;
 
   return uploadAvatar(userId, asset.uri);
-}
-
-// ── Verificación de identidad ─────────────────────────────────────────────────
-
-export async function markUserAsVerified(userId: string) {
-  return updateProfile(userId, { verified: true });
 }

@@ -8,8 +8,12 @@ export function usePushNotificationsInitializer() {
 
   useEffect(() => {
     if (!userId) return
-    registerForPushNotifications().then((token) => {
-      if (token) savePushTokenToProfile(userId, token)
-    })
+    registerForPushNotifications()
+      .then((token) => {
+        if (token) savePushTokenToProfile(userId, token)
+      })
+      .catch(() => {
+        // Firebase/FCM no disponible en este build — ignorar silenciosamente
+      })
   }, [userId])
 }

@@ -13,14 +13,6 @@ export default function AuthLayout() {
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
-      <Stack.Screen
-        name="profile-setup"
-        options={{ headerShown: true, title: 'Tu perfil', headerBackVisible: false }}
-      />
-      <Stack.Screen
-        name="verify-identity"
-        options={{ headerShown: true, title: 'Verificar identidad', headerBackVisible: false }}
-      />
     </Stack>
   );
 }

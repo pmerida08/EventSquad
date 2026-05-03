@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { useTheme, type Theme } from '@/constants/theme';
 import { signOut } from '@/lib/auth';
 import { useAuthStore } from '@/stores/authStore';
@@ -52,7 +51,7 @@ export default function ProfileScreen() {
         {/* Header */}
         <View style={s.header}>
           <Text style={s.headerTitle}>Mi perfil</Text>
-          <Pressable onPress={() => router.push('/(auth)/profile-setup')} style={s.editButton}>
+          <Pressable onPress={() => router.push('/(app)/profile-setup')} style={s.editButton}>
             <Text style={s.editButtonText}>Editar</Text>
           </Pressable>
         </View>
@@ -70,16 +69,6 @@ export default function ProfileScreen() {
           </View>
           <Text style={s.displayName}>{profile.display_name}</Text>
           <Text style={s.email}>{user?.email}</Text>
-          <View style={s.badges}>
-            {profile.verified ? (
-              <VerifiedBadge size="md" />
-            ) : (
-              <Pressable style={s.unverifiedBadge} onPress={() => router.push('/(auth)/verify-identity')}>
-                <FontAwesome name="exclamation-triangle" size={12} color="#92400E" style={{ marginRight: 6 }} />
-                <Text style={s.unverifiedText}>No verificado — Verificar ahora</Text>
-              </Pressable>
-            )}
-          </View>
         </View>
 
         {/* Bio */}
@@ -89,25 +78,8 @@ export default function ProfileScreen() {
             <Text style={s.bio}>{profile.bio}</Text>
           </View>
         ) : (
-          <Pressable style={s.emptyBioCard} onPress={() => router.push('/(auth)/profile-setup')}>
+          <Pressable style={s.emptyBioCard} onPress={() => router.push('/(app)/profile-setup')}>
             <Text style={s.emptyBioText}>+ Añadir una bio</Text>
-          </Pressable>
-        )}
-
-        {/* Banner verificación */}
-        {!profile.verified && (
-          <Pressable style={s.verifyBanner} onPress={() => router.push('/(auth)/verify-identity')}>
-            <View style={s.verifyBannerHeader}>
-              <FontAwesome name="shield" size={16} color={t.primary} style={{ marginRight: 8 }} />
-              <Text style={s.verifyBannerTitle}>Verifica tu identidad</Text>
-            </View>
-            <Text style={s.verifyBannerText}>
-              Necesitas verificarte para unirte a grupos de eventos. Solo tarda 30 segundos.
-            </Text>
-            <View style={s.verifyBannerCtaRow}>
-              <Text style={s.verifyBannerCta}>Verificar ahora</Text>
-              <FontAwesome name="chevron-right" size={12} color={t.primary} />
-            </View>
           </Pressable>
         )}
 
@@ -153,20 +125,11 @@ function makeStyles(t: Theme) {
     avatarInitial:  { fontSize: 36, color: '#fff', fontWeight: '700' },
     displayName:    { fontSize: 22, fontWeight: '700', color: t.text, marginBottom: 4 },
     email:          { fontSize: 14, color: t.textTertiary, marginBottom: 12 },
-    badges:         { flexDirection: 'row', gap: 8 },
-    unverifiedBadge:{ flexDirection: 'row', alignItems: 'center', backgroundColor: t.amberBg, borderWidth: 1, borderColor: '#FCD34D', borderRadius: 99, paddingHorizontal: 10, paddingVertical: 4 },
-    unverifiedText: { fontSize: 12, color: '#92400E', fontWeight: '600' },
     section:        { marginBottom: 16 },
     sectionTitle:   { fontSize: 13, fontWeight: '700', color: t.textTertiary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
     bio:            { fontSize: 15, color: t.text, lineHeight: 22, backgroundColor: t.surface, borderRadius: 12, padding: 16 },
     emptyBioCard:   { backgroundColor: t.surface, borderRadius: 12, padding: 16, borderWidth: 1.5, borderColor: t.border, borderStyle: 'dashed', alignItems: 'center', marginBottom: 16 },
     emptyBioText:   { color: t.textTertiary, fontSize: 15 },
-    verifyBanner:       { backgroundColor: t.primaryBg, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: t.primaryLight + '55', marginBottom: 16 },
-    verifyBannerHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-    verifyBannerTitle:  { fontSize: 16, fontWeight: '700', color: t.primary },
-    verifyBannerText:   { fontSize: 14, color: t.textSecondary, lineHeight: 20, marginBottom: 10 },
-    verifyBannerCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    verifyBannerCta:    { fontSize: 14, fontWeight: '700', color: t.primary },
     infoCard:       { backgroundColor: t.surface, borderRadius: 12, paddingHorizontal: 16, overflow: 'hidden' },
     infoRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
     divider:        { height: 1, backgroundColor: t.borderLight },
