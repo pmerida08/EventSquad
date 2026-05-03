@@ -1,8 +1,12 @@
 // Edge Function: send-push-notification
 // Recibe un array de notificaciones y las envía via Expo Push API.
 // Llamada desde triggers de base de datos (pg_net) con service_role_key.
+//
+// Rate limiting: máx 500 mensajes por invocación (protección contra payloads masivos).
+// La frecuencia de llamada está controlada por los triggers DB, no por esta función.
 
-const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send'
+const EXPO_PUSH_URL  = 'https://exp.host/--/api/v2/push/send'
+const MAX_PER_CALL   = 500  // límite de tokens por invocación
 
 interface IncomingNotification {
   token: string
@@ -39,7 +43,7 @@ Deno.serve(async (req) => {
     return new Response('Invalid JSON', { status: 400 })
   }
 
-  const incoming = body.notifications ?? []
+  const incoming = (body.notifications ?? []).slice(0, MAX_PER_CALL)
   if (incoming.length === 0) {
     return new Response(JSON.stringify({ sent: 0 }), {
       headers: { 'Content-Type': 'application/json' },
