@@ -1,7 +1,8 @@
-import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import Constants from 'expo-constants'
+import * as Notifications from 'expo-notifications'
+import { Platform } from 'react-native'
 
-import { supabase } from './supabase';
+import { supabase } from './supabase'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -11,7 +12,7 @@ Notifications.setNotificationHandler({
     shouldShowBanner: true,
     shouldShowList: true,
   }),
-});
+})
 
 export async function registerForPushNotifications(): Promise<string | null> {
   if (Platform.OS === 'android') {
@@ -19,26 +20,27 @@ export async function registerForPushNotifications(): Promise<string | null> {
       name: 'default',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
-    });
+    })
   }
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
+  const { status: existingStatus } = await Notifications.getPermissionsAsync()
+  let finalStatus = existingStatus
 
   if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
+    const { status } = await Notifications.requestPermissionsAsync()
+    finalStatus = status
   }
 
-  if (finalStatus !== 'granted') return null;
+  if (finalStatus !== 'granted') return null
 
-  const token = (await Notifications.getExpoPushTokenAsync()).data;
-  return token;
+  const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined
+  const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId })
+  return token
 }
 
 export async function savePushTokenToProfile(userId: string, token: string): Promise<void> {
   await supabase
     .from('profiles')
     .update({ expo_push_token: token })
-    .eq('id', userId);
+    .eq('id', userId)
 }

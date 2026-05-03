@@ -13,18 +13,24 @@ export const mockLimit          = jest.fn()
 export const mockSingle         = jest.fn()
 export const mockUpsert         = jest.fn()
 export const mockInsert         = jest.fn()
+export const mockUpdate         = jest.fn()
+export const mockIn             = jest.fn()
+export const mockMaybeSingle    = jest.fn()
 
 /** All chainable query methods return the same object */
 const chainable = {
-  select: mockSelect,
-  eq:     mockEq,
-  gte:    mockGte,
-  lt:     mockLt,
-  order:  mockOrder,
-  limit:  mockLimit,
-  single: mockSingle,
-  upsert: mockUpsert,
-  insert: mockInsert,
+  select:      mockSelect,
+  eq:          mockEq,
+  gte:         mockGte,
+  lt:          mockLt,
+  order:       mockOrder,
+  limit:       mockLimit,
+  single:      mockSingle,
+  upsert:      mockUpsert,
+  insert:      mockInsert,
+  update:      mockUpdate,
+  in:          mockIn,
+  maybeSingle: mockMaybeSingle,
 }
 
 function restoreChain() {
@@ -61,5 +67,8 @@ export function resetSupabaseMocks() {
   mockSingle.mockReset()
   mockUpsert.mockReset()
   mockInsert.mockReset()
+  mockUpdate.mockReset()
+  mockIn.mockReset()
+  mockMaybeSingle.mockReset()
   restoreChain()
 }
