@@ -140,39 +140,41 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 
 ---
 
-## Fase 5 — Sistema de votación para punto de encuentro 🔜
+## Fase 5 — Sistema de votación para punto de encuentro ✅
 
 ### Base de datos (Supabase)
-- [ ] Tabla `meetup_proposals`:
-  - `id`, `group_id`, `proposed_by`, `location_name`, `lat`, `lng`, `proposed_time`, `created_at`
-- [ ] Tabla `meetup_votes`:
-  - `proposal_id`, `user_id`, `created_at` (voto positivo = insertar fila)
-- [ ] Vista `meetup_proposals_with_votes` que agrega el conteo de votos
-- [ ] Trigger: cuando todos los miembros han votado → marcar propuesta ganadora (`selected: boolean`)
+- [x] Tabla `meetup_proposals`: `id`, `group_id`, `proposed_by`, `location_name`, `lat`, `lng`, `proposed_time`, `selected`, `created_at`
+- [x] Tabla `meetup_votes`: `proposal_id`, `user_id`, `created_at` (voto positivo = insertar fila)
+- [x] Vista `meetup_proposals_with_votes` que agrega el conteo de votos
+- [x] RPC `vote_for_proposal` — selecciona ganadora automáticamente cuando todos los miembros han votado (desempate por antigüedad)
 
 ### Pantallas
-- [ ] Pantalla de votación dentro del grupo (`app/(app)/group/[id]/voting.tsx`, pantalla existe como placeholder):
-  - Lista de propuestas de lugar y hora
-  - Botón de voto en cada propuesta
-  - Barra de progreso de votos
-  - Resultado final destacado cuando todos han votado
-- [ ] Formulario para añadir propuesta: lugar + selector de hora
+- [x] Pantalla de votación dentro del grupo (`app/(app)/group/[id]/voting.tsx`):
+  - Lista de propuestas con `VotingCard` (lugar, hora, barra de progreso de votos)
+  - Botón de voto en cada propuesta; feedback de spinner mientras vota
+  - Banner ganador destacado cuando la votación concluye
+  - Realtime via `subscribeToVoting` (INSERT/UPDATE en propuestas y votos)
+- [x] Formulario para añadir propuesta: lugar + selector de fecha/hora (spinner nativo sin DateTimePicker)
+
+### Sistema de moderación (bonus Fase 5)
+- [x] Tablas `user_reports` + `kick_votes`
+- [x] RPCs `report_user`, `vote_kick_user`, `kick_member`
+- [x] UI: long-press en mensajes → reportar; botón "···" en miembros → reportar / votar para echar / echar (owner)
 
 ---
 
-## Fase 6 — Notificaciones push 🔜
+## Fase 6 — Notificaciones push ✅
 
 ### Configuración
-- [ ] Configurar `expo-notifications` con permisos en iOS y Android
-- [ ] Guardar `expo_push_token` en tabla `profiles` al iniciar sesión (`lib/notifications.ts` existe como placeholder)
-- [ ] Supabase Edge Function `send-push-notification` que llama a la API de Expo
+- [x] Configurar `expo-notifications` con permisos en iOS y Android (plugin en `app.json`, canal Android, `POST_NOTIFICATIONS`)
+- [x] Guardar `expo_push_token` en tabla `profiles` al iniciar sesión (`hooks/usePushNotifications.ts` + `lib/notifications.ts`)
+- [x] Supabase Edge Function `send-push-notification` — batch hasta 100 tokens, llama a Expo Push API, autenticada con `service_role_key`
 
 ### Triggers de notificación
-- [ ] Nuevo mensaje en el grupo del usuario
-- [ ] Alguien se une al grupo del usuario
-- [ ] Votación completada: recordatorio con hora y lugar del encuentro
-- [ ] 2 horas antes del evento: recordatorio automático con el punto de encuentro acordado
-- [ ] Scheduled Edge Function (cron) para los recordatorios temporales
+- [x] Nuevo mensaje en el chat → notifica a todos los miembros del grupo excepto el emisor
+- [x] Alguien se une al grupo → notifica al owner del grupo
+- [x] Votación completada (ganador seleccionado) → notifica a todos los miembros con lugar y hora
+- [x] Recordatorio 2 horas antes del evento → cron cada 10 min detecta window 115-125 min, notifica a todos los miembros
 
 ---
 

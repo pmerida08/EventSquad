@@ -1,6 +1,7 @@
 import { Redirect, Stack } from 'expo-router';
 
 import { useLocationInitializer } from '@/hooks/useLocation';
+import { usePushNotificationsInitializer } from '@/hooks/usePushNotifications';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function AppLayout() {
@@ -8,6 +9,8 @@ export default function AppLayout() {
 
   // Solicita permisos de ubicación y guarda coords en el store
   useLocationInitializer();
+  // Solicita permisos de push y guarda el token en el perfil
+  usePushNotificationsInitializer();
 
   // Sin sesión → flujo de auth
   if (!session) return <Redirect href="/(auth)/onboarding" />;
