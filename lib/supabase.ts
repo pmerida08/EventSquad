@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { createClient } from '@supabase/supabase-js';
 
@@ -58,9 +59,27 @@ const SecureStoreAdapter = {
   },
 };
 
+// En web (eas update export estático / SSR) expo-secure-store no existe.
+// Usamos almacenamiento en memoria: no persiste entre recargas pero evita
+// crashear el proceso de exportación. La app real solo corre en nativo.
+const WebMemoryStorage = (() => {
+  const store: Record<string, string> = {};
+  return {
+    async getItem(key: string): Promise<string | null> {
+      return store[key] ?? null;
+    },
+    async setItem(key: string, value: string): Promise<void> {
+      store[key] = value;
+    },
+    async removeItem(key: string): Promise<void> {
+      delete store[key];
+    },
+  };
+})();
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: SecureStoreAdapter,
+    storage: Platform.OS === 'web' ? WebMemoryStorage : SecureStoreAdapter,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
