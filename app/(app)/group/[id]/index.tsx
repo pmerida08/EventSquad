@@ -343,7 +343,6 @@ export default function GroupDetailScreen() {
                     <View key={m.user_id} style={s.memberRow}>
                       <View style={s.memberInfo}>
                         <Text style={s.memberName}>{m.profiles.display_name}</Text>
-                        {m.profiles.verified && <Text style={s.verified}>✓ verificado</Text>}
                       </View>
                       <View style={s.memberRight}>
                         <View style={[s.roleBadge, m.role === 'owner' && s.roleBadgeOwner]}>
@@ -475,7 +474,6 @@ function makeStyles(t: Theme) {
     memberRow:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderTopWidth: 1, borderTopColor: t.borderLight },
     memberInfo:   { flex: 1 },
     memberName:   { fontSize: 14, fontWeight: '600', color: t.text },
-    verified:     { fontSize: 11, color: t.green, marginTop: 2, fontWeight: '500' },
     memberRight:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
     roleBadge:      { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3, backgroundColor: t.surface2 },
     roleBadgeOwner: { backgroundColor: t.primaryBg },

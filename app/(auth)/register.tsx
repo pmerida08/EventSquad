@@ -63,7 +63,7 @@ export default function RegisterScreen() {
       );
       if (user && session) {
         setSession(session);
-        router.replace('/(auth)/profile-setup');
+        router.replace('/(app)/profile-setup');
       } else {
         Alert.alert('Confirma tu email', 'Te hemos enviado un correo de confirmación. Revísalo y luego inicia sesión.');
         router.replace('/(auth)/login');

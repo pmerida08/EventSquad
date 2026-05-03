@@ -18,7 +18,6 @@ interface AuthState {
 
   // Helpers de lectura
   isAuthenticated: () => boolean;
-  isVerified: () => boolean;
   hasProfile: () => boolean;
 }
 
@@ -38,8 +37,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: () => set({ session: null, user: null, profile: null }),
 
   isAuthenticated: () => get().session !== null,
-
-  isVerified: () => get().profile?.verified === true,
 
   hasProfile: () => {
     const profile = get().profile;

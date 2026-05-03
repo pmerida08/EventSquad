@@ -42,6 +42,10 @@ export default function AppLayout() {
         name="group/[id]/voting"
         options={{ headerShown: true, title: 'Punto de encuentro', headerBackTitle: 'Atrás' }}
       />
+      <Stack.Screen
+        name="profile-setup"
+        options={{ headerShown: true, title: 'Tu perfil', headerBackTitle: 'Atrás' }}
+      />
     </Stack>
   );
 }
