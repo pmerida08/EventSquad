@@ -31,12 +31,14 @@ export default function CreateGroupScreen() {
   const [error, setError]     = useState<string | null>(null);
 
   async function handleCreate() {
-    if (!name.trim()) { setError('El nombre es obligatorio.'); return; }
-    if (!eventId)     { setError('Evento no identificado.'); return; }
+    const nameTrimmed = name.trim();
+    if (!nameTrimmed)          { setError('El nombre es obligatorio.'); return; }
+    if (nameTrimmed.length < 2){ setError('El nombre debe tener al menos 2 caracteres.'); return; }
+    if (!eventId)               { setError('Evento no identificado.'); return; }
     setError(null);
     setLoading(true);
     try {
-      const group = await createGroup(eventId, name.trim(), description.trim(), maxMembers);
+      const group = await createGroup(eventId, nameTrimmed, description.trim(), maxMembers);
       router.replace(`/(app)/group/${group.id}` as never);
     } catch (e) {
       setError(parseGroupError((e as Error).message));

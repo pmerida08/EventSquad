@@ -183,20 +183,27 @@ App de React Native + Supabase que permite a personas que van solas a eventos (c
 ### Testing
 - [x] Tests unitarios de `lib/events.ts`, `lib/messages.ts`, `constants/theme.ts` (Jest + jest-expo)
 - [x] Tests de componentes `EventCard`, `EventCardSkeleton` (@testing-library/react-native)
+- [x] Tests unitarios de `lib/voting.ts` (22 tests) y `lib/notifications.ts` (12 tests) — 82/82 pasando
 - [ ] Tests de integración de Edge Functions (Deno test)
 - [ ] Tests E2E de flujos críticos (Maestro / Playwright)
 - [ ] Prueba de RLS policies con `supabase test`
 
 ### Seguridad
-- [ ] Auditoría completa de RLS policies (ninguna tabla sin policy)
-- [ ] Rate limiting en Edge Functions
-- [ ] Validación exhaustiva de inputs en todos los formularios
-- [ ] Revisar que datos sensibles no se exponen en el cliente
+- [x] Auditoría completa de RLS policies — 6 vulnerabilidades corregidas:
+  - Eliminada `groups_insert_authenticated` (bypass del RPC `create_group`)
+  - `profiles`, `groups`, `group_members` restringidos a usuarios autenticados (antes: anon)
+  - `group_members_delete_own` limitado a rol `member` (owners no pueden abandonar sin borrar el grupo)
+  - `expo_push_token` revocado de SELECT para roles `authenticated` y `anon` (write-only desde el cliente)
+- [x] Rate limiting en Edge Functions — `send-push-notification` limita a 500 tokens por invocación; autenticada solo con `service_role_key`
+- [x] Validación exhaustiva de inputs:
+  - `register.tsx`: email con regex, nombre mínimo 2 caracteres
+  - `create-group.tsx`: nombre mínimo 2 caracteres
+- [x] Datos sensibles: `expo_push_token` no expuesto en la Data API
 
 ### Despliegue
 - [x] Configurar EAS Build con perfiles `development`, `preview`, `production`
 - [x] App icons y splash screen definitivos (pin + nota musical, indigo `#6366F1`)
-- [ ] Configurar OTA updates con EAS Update
+- [x] Configurar OTA updates con EAS Update — canales `development`, `preview`, `production` en `eas.json`
 - [ ] Publicar en TestFlight (iOS) y Play Console (Android) para beta testers
 - [ ] Integrar Veriff / AWS Rekognition para liveness check real
 

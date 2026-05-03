@@ -31,8 +31,19 @@ export default function RegisterScreen() {
   const [loading, setLoading]                 = useState(false);
 
   async function handleRegister() {
-    if (!displayName.trim() || !email.trim() || !password) {
+    const nameTrimmed  = displayName.trim();
+    const emailTrimmed = email.trim().toLowerCase();
+
+    if (!nameTrimmed || !emailTrimmed || !password) {
       Alert.alert('Campos requeridos', 'Rellena todos los campos.');
+      return;
+    }
+    if (nameTrimmed.length < 2) {
+      Alert.alert('Nombre muy corto', 'El nombre debe tener al menos 2 caracteres.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
+      Alert.alert('Email inválido', 'Introduce un email con formato correcto.');
       return;
     }
     if (password.length < 8) {
@@ -46,9 +57,9 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       const { user, session } = await signUpWithEmail(
-        email.trim().toLowerCase(),
+        emailTrimmed,
         password,
-        displayName.trim(),
+        nameTrimmed,
       );
       if (user && session) {
         setSession(session);
